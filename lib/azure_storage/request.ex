@@ -10,6 +10,10 @@ defmodule AzureStorage.Request do
     Client.get(url, headers, options)
   end
 
+  def put(account_name, account_key, storage_service, query) do
+    put(account_name, account_key, storage_service, query, "", [])
+  end
+
   def put(account_name, account_key, storage_service, query, body, options \\ []) do
     method = "PUT"
     url = "https://#{account_name}.#{storage_service}.core.windows.net/#{query}"
@@ -39,7 +43,7 @@ defmodule AzureStorage.Request do
   end
 
   def delete(account_name, account_key, storage_service, query, options \\ []) do
-    method = "PUT"
+    method = "DELETE"
     url = "https://#{account_name}.#{storage_service}.core.windows.net/#{query}"
     headers = setup_request_headers(account_name, account_key, method, query)
     Client.delete(url, headers, options)
@@ -67,7 +71,7 @@ defmodule AzureStorage.Request do
     auth_key = {:Authorization, "SharedKey #{account_name}:#{signature}"}
 
     [auth_key | headers]
-    |> IO.inspect()
+    # |> IO.inspect()
   end
 
   defp generate_headers() do
@@ -116,6 +120,9 @@ defmodule AzureStorage.Request do
       |> Enum.map(fn line -> String.replace(line, "=", ":") end)
       |> Enum.join("\n")
 
-    "/#{account_name}/#{container}\n#{canonical}"
+    case canonical == query_string do
+      true -> "/#{account_name}/#{canonical}"
+      false -> "/#{account_name}/#{container}\n#{canonical}"
+    end
   end
 end

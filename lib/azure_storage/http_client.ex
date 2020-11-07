@@ -4,6 +4,7 @@ defmodule Http.Client do
   """
   def http_adapter, do: Application.get_env(:az, :http_adapter, HTTPoison)
 
+  @spec get(any, any, any) :: {:error, any} | {:ok, any}
   def get(url, headers, options) do
     http_adapter().get(url, headers, options)
     |> process_response()
@@ -16,7 +17,6 @@ defmodule Http.Client do
 
   def post(url, body, headers, options) do
     http_adapter().post(url, body, headers, options)
-    # |> IO.inspect()
     |> process_response()
   end
 
