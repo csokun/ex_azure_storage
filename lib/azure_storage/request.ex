@@ -54,6 +54,7 @@ defmodule AzureStorage.Request do
     # build sign payload
     headers_uri_str = "#{canonical_headers}\n#{canonical_resource}"
     data = "#{method}\n\n\n#{content_length}\n\n#{@content_type}\n\n\n\n\n\n\n#{headers_uri_str}"
+    IO.inspect(data)
 
     key =
       account_key
@@ -66,6 +67,7 @@ defmodule AzureStorage.Request do
     auth_key = {:Authorization, "SharedKey #{account_name}:#{signature}"}
 
     [auth_key | headers]
+    |> IO.inspect()
   end
 
   defp generate_headers() do
@@ -78,7 +80,9 @@ defmodule AzureStorage.Request do
 
   defp get_date() do
     DateTime.utc_now()
-    |> Timex.format!("{WDshort}, {D} {Mshort} {YYYY} {h24}:{m}:{s} GMT")
+    |> Calendar.strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+    # |> Timex.format!("{WDshort}, {D} {Mshort} {YYYY} {h24}:{m}:{s} GMT")
   end
 
   defp get_canonical_headers(headers) do
