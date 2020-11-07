@@ -20,7 +20,7 @@ defmodule ExAzureStorage.MixProject do
   def application do
     [
       extra_applications: [:logger, :timex],
-      mod: {Az.Application, []}
+      mod: {AzureStorage.Application, []}
     ]
   end
 
