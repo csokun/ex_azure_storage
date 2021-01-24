@@ -15,4 +15,9 @@ defmodule AzureStorage.Core.Account do
         {:error, "Invalid key - not base 64"}
     end
   end
+
+  def get(pid) do
+    {:ok, account} = :sys.get_state(pid)
+    account
+  end
 end

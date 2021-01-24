@@ -1,20 +1,32 @@
 defmodule AzureStorage.Request do
+  alias AzureStorage.Core.Account
   alias Http.Client
   @api_version "2019-07-07"
   @content_type "application/xml"
 
-  def get(account_name, account_key, storage_service, query, options \\ []) do
+  def get(
+        %Account{name: account_name} = account,
+        storage_service,
+        query,
+        options \\ []
+      ) do
     method = "GET"
     url = "https://#{account_name}.#{storage_service}.core.windows.net/#{query}"
-    headers = setup_request_headers(account_name, account_key, method, query)
+    headers = setup_request_headers(account, method, query)
     Client.get(url, headers, options)
   end
 
-  def put(account_name, account_key, storage_service, query) do
-    put(account_name, account_key, storage_service, query, "", [])
+  def put(%Account{} = account, storage_service, query) do
+    put(account, storage_service, query, "", [])
   end
 
-  def put(account_name, account_key, storage_service, query, body, options \\ []) do
+  def put(
+        %Account{name: account_name} = account,
+        storage_service,
+        query,
+        body,
+        options \\ []
+      ) do
     method = "PUT"
     url = "https://#{account_name}.#{storage_service}.core.windows.net/#{query}"
 
@@ -24,11 +36,11 @@ defmodule AzureStorage.Request do
         len -> "#{len}"
       end
 
-    headers = setup_request_headers(account_name, account_key, method, query, content_length)
+    headers = setup_request_headers(account, method, query, content_length)
     Client.put(url, body, headers, options)
   end
 
-  def post(account_name, account_key, storage_service, query, body, options \\ []) do
+  def post(%Account{name: account_name} = account, storage_service, query, body, options \\ []) do
     method = "POST"
     url = "https://#{account_name}.#{storage_service}.core.windows.net/#{query}"
 
@@ -38,18 +50,25 @@ defmodule AzureStorage.Request do
         len -> "#{len}"
       end
 
-    headers = setup_request_headers(account_name, account_key, method, query, content_length)
+    headers = setup_request_headers(account, method, query, content_length)
     Client.post(url, body, headers, options)
   end
 
-  def delete(account_name, account_key, storage_service, query, options \\ []) do
+  def delete(%Account{name: account_name} = account, storage_service, query, options \\ []) do
     method = "DELETE"
     url = "https://#{account_name}.#{storage_service}.core.windows.net/#{query}"
-    headers = setup_request_headers(account_name, account_key, method, query)
+    headers = setup_request_headers(account, method, query)
     Client.delete(url, headers, options)
   end
 
-  defp setup_request_headers(account_name, account_key, method, query, content_length \\ "") do
+  # -------------------- helpers -----------------------
+
+  defp setup_request_headers(
+         %Account{name: account_name, key: account_key},
+         method,
+         query,
+         content_length \\ ""
+       ) do
     headers = generate_headers()
     canonical_headers = headers |> get_canonical_headers()
 
@@ -58,7 +77,7 @@ defmodule AzureStorage.Request do
     # build sign payload
     headers_uri_str = "#{canonical_headers}\n#{canonical_resource}"
     data = "#{method}\n\n\n#{content_length}\n\n#{@content_type}\n\n\n\n\n\n\n#{headers_uri_str}"
-    IO.inspect(data)
+    # IO.inspect(data)
 
     key =
       account_key
