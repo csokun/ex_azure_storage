@@ -48,16 +48,26 @@ defmodule AzureStorage.Queue do
   The encoded message can be up to 64 KiB in size for versions 2011-08-18 and newer, or 8 KiB in size for previous versions.
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/put-message
   """
-  def create_message(%Account{} = account, query_name, message) do
+  def create_message(%Account{} = account, queue_name, message) do
     # default 7 days
     messagettl = 7 * 24 * 60 * 60 * 60
-    query = "#{query_name}/messages?visibilitytimeout=0&messagettl=#{messagettl}"
+    query = "#{queue_name}/messages?visibilitytimeout=0&messagettl=#{messagettl}"
     encoded_message = message |> Base.encode64()
     body = "<QueueMessage><MessageText>#{encoded_message}</MessageText></QueueMessage>"
 
     account
     |> Request.post(@storage_service, query, body)
     |> parse_queue_message_response()
+  end
+
+  def delete_message(%Account{} = account, queue_name, %{
+        "MessageId" => message_id,
+        "PopReceipt" => pop_receipt
+      }) do
+    query = "#{queue_name}/messages/#{message_id}?popreceipt=#{pop_receipt}"
+
+    account
+    |> Request.delete(@storage_service, query)
   end
 
   @doc """
