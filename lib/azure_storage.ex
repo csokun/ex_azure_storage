@@ -1,0 +1,2 @@
+defmodule AzureStorage do
+end
