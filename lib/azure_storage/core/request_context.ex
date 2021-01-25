@@ -18,13 +18,13 @@ defmodule AzureStorage.Core.RequestContext do
   # def sign(%__MODULE__{} = ctx, uri) do
   # end
 
-  defp clone(%__MODULE__{} = ctx) do
-    headers = Map.merge(ctx.headers, %{"x-ms-date": get_current_datetime_utc()})
-    Map.merge(ctx, %{headers: headers})
-  end
+  # defp clone(%__MODULE__{} = ctx) do
+  #   headers = Map.merge(ctx.headers, %{"x-ms-date": get_current_datetime_utc()})
+  #   Map.merge(ctx, %{headers: headers})
+  # end
 
-  defp get_current_datetime_utc() do
-    DateTime.utc_now()
-    |> Calendar.strftime("%a, %d %b %Y %H:%M:%S GMT")
-  end
+  # defp get_current_datetime_utc() do
+  #   DateTime.utc_now()
+  #   |> Calendar.strftime("%a, %d %b %Y %H:%M:%S GMT")
+  # end
 end
