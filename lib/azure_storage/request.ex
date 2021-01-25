@@ -93,7 +93,7 @@ defmodule AzureStorage.Request do
     # |> IO.inspect()
   end
 
-  defp generate_headers() do
+  defp generate_headers(_options \\ []) do
     [
       {:"x-ms-version", @api_version},
       {:"x-ms-date", get_date()},
@@ -104,8 +104,6 @@ defmodule AzureStorage.Request do
   defp get_date() do
     DateTime.utc_now()
     |> Calendar.strftime("%a, %d %b %Y %H:%M:%S GMT")
-
-    # |> Timex.format!("{WDshort}, {D} {Mshort} {YYYY} {h24}:{m}:{s} GMT")
   end
 
   defp get_canonical_headers(headers) do

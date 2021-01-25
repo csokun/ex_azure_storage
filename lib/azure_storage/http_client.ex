@@ -2,7 +2,7 @@ defmodule Http.Client do
   @moduledoc """
   HTTP Client
   """
-  def http_adapter, do: Application.get_env(:az, :http_adapter, HTTPoison)
+  def http_adapter, do: Application.get_env(:ex_azure_storage, :http_adapter, HTTPoison)
 
   @spec get(any, any, any) :: {:error, any} | {:ok, any}
   def get(url, headers, options) do

@@ -15,8 +15,8 @@ defmodule AzureStorage.Core.RequestContext do
     }
   end
 
-  def sign(%__MODULE__{} = ctx, uri) do
-  end
+  # def sign(%__MODULE__{} = ctx, uri) do
+  # end
 
   defp clone(%__MODULE__{} = ctx) do
     headers = Map.merge(ctx.headers, %{"x-ms-date": get_current_datetime_utc()})
@@ -25,6 +25,6 @@ defmodule AzureStorage.Core.RequestContext do
 
   defp get_current_datetime_utc() do
     DateTime.utc_now()
-    |> Timex.format!("{WDshort}, {D} {Mshort} {YYYY} {h24}:{m}:{s} GMT")
+    |> Calendar.strftime("%a, %d %b %Y %H:%M:%S GMT")
   end
 end

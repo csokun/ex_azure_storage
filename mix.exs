@@ -19,7 +19,7 @@ defmodule ExAzureStorage.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger, :timex],
+      extra_applications: [:logger],
       mod: {AzureStorage.Application, []}
     ]
   end
@@ -27,9 +27,8 @@ defmodule ExAzureStorage.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:timex, "~> 3.6.2"},
       {:elixir_xml_to_map, "~> 1.0"},
-      {:mox, "~> 0.5", only: :test},
+      {:mox, "~> 1.0.0", only: :test},
       {:httpoison, "~> 1.7.0"},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
