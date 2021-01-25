@@ -1,6 +1,6 @@
-# ExAzureStorage
+# AzureStorage  [![Build Status](https://github.com/csokun/ex_azure_storage/workflows/CI/badge.svg?branch=master)](https://github.com/csokun/ex_azure_storage/actions?query=workflow%3ACI)
 
-**TODO: Add description**
+Elixir Azure Storage Rest API Client.
 
 ## Installation
 
