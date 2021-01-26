@@ -28,6 +28,7 @@ defmodule ExAzureStorage.MixProject do
   defp deps do
     [
       {:elixir_xml_to_map, "~> 1.0"},
+      {:jason, "~> 1.2"},
       {:mox, "~> 1.0.0", only: :test},
       {:httpoison, "~> 1.7.0"},
       {:nimble_options, "~> 0.3.5"},
