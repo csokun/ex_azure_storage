@@ -4,6 +4,7 @@ defmodule AzureStorage.Queue do
   """
   alias AzureStorage.Core.Account
   alias AzureStorage.Request
+  alias AzureStorage.Queue.Schema
   import AzureStorage.Parser
 
   @storage_service "queue"
@@ -48,10 +49,14 @@ defmodule AzureStorage.Queue do
   The encoded message can be up to 64 KiB in size for versions 2011-08-18 and newer, or 8 KiB in size for previous versions.
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/put-message
   """
-  def create_message(%Account{} = account, queue_name, message) do
-    # default 7 days
-    messagettl = 7 * 24 * 60 * 60 * 60
-    query = "#{queue_name}/messages?visibilitytimeout=0&messagettl=#{messagettl}"
+  def create_message(%Account{} = account, queue_name, message, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.create_message_options())
+    visibility_timeout = opts[:visibility_timeout]
+    message_ttl = opts[:message_ttl]
+
+    query =
+      "#{queue_name}/messages?visibilitytimeout=#{visibility_timeout}&messagettl=#{message_ttl}"
+
     encoded_message = message |> Base.encode64()
     body = "<QueueMessage><MessageText>#{encoded_message}</MessageText></QueueMessage>"
 
@@ -74,9 +79,15 @@ defmodule AzureStorage.Queue do
   The Get Messages operation retrieves one or more messages from the front of the queue.
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/get-messages
   """
-  def get_messages(%Account{} = account, queue_name) do
-    # default visibilityTimeout 30s
-    query = "#{queue_name}/messages?visibilitytimeout=30&numofmessages=2"
+  def get_messages(%Account{} = account, queue_name, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.get_messages_options())
+    number_of_messages = opts[:number_of_messages]
+    visibility_timeout = opts[:visibility_timeout]
+
+    query =
+      "#{queue_name}/messages?visibilitytimeout=#{visibility_timeout}&numofmessages=#{
+        number_of_messages
+      }"
 
     account
     |> Request.get(@storage_service, query)
