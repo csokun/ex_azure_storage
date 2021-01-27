@@ -6,6 +6,6 @@ end
 
 defimpl Jason.Encoder, for: AzureStorage.Table.Entity do
   def encode(%AzureStorage.Table.Entity{} = entity, _opts) do
-    %{_: Map.get(entity, :_, ""), "$": Map.get(entity, :"$")} |> Jason.encode!()
+    entity |> Map.take([:_, :"$"]) |> Jason.encode!()
   end
 end
