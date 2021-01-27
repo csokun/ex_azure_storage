@@ -1,5 +1,5 @@
 defmodule AzureStorage.Table.Entity do
-  defstruct _: "", "$": ""
+  # defstruct _: "", "$": ""
 
-  def new(value, type), do: %__MODULE__{_: value, "$": type}
+  def new(value, type), do: %{_: value, "$": type}
 end
