@@ -1,7 +1,9 @@
 defmodule AzureStorage.Table.Entity do
-  defstruct _: "", "$": ""
+  defstruct _: nil, "$": ""
 
   def new(value, type), do: %__MODULE__{_: value, "$": type}
+
+  # validation methods
 end
 
 defimpl Jason.Encoder, for: AzureStorage.Table.Entity do
