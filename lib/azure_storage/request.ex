@@ -62,40 +62,45 @@ defmodule AzureStorage.Request do
   end
 
   # -------------------- helpers -----------------------
+  defp setup_request_headers(%Account{} = account, storage_service, method, query),
+    do: setup_request_headers(account, storage_service, method, query, "")
 
   defp setup_request_headers(
          %Account{name: account_name, key: account_key},
+         "table" = storage_service,
+         method,
+         query,
+         _
+       ) do
+    headers = generate_headers(storage_service)
+    # sign payload
+    canonical_resource = get_canonical_resource(storage_service, account_name, query)
+    data = "#{method}\n\n\n#{headers[:"x-ms-date"]}\n#{canonical_resource}"
+
+    auth_key = sign_request(account_key, data)
+    [auth_key | headers]
+  end
+
+  defp setup_request_headers(
+         %Account{name: account_name} = account,
          storage_service,
          method,
          query,
-         content_length \\ ""
+         content_length
        ) do
     headers = generate_headers(storage_service)
     canonical_headers = headers |> get_canonical_headers()
 
+    # sign payload
     canonical_resource = get_canonical_resource(storage_service, account_name, query)
+    headers_uri_str = "#{canonical_headers}\n#{canonical_resource}"
+    data = "#{method}\n\n\n#{content_length}\n\n#{@content_type}\n\n\n\n\n\n\n#{headers_uri_str}"
 
-    # build sign payload
-    now = get_date()
+    auth_key = account |> sign_request(data)
+    [auth_key | headers]
+  end
 
-    data =
-      case storage_service do
-        "table" ->
-          "#{method}\n\n\n#{now}\n#{canonical_resource}"
-
-        _ ->
-          headers_uri_str = "#{canonical_headers}\n#{canonical_resource}"
-          "#{method}\n\n\n#{content_length}\n\n#{@content_type}\n\n\n\n\n\n\n#{headers_uri_str}"
-      end
-
-    # table
-    headers =
-      headers ++
-        [
-          {:"x-ms-version", "2018-03-28"},
-          {:"x-ms-date", now}
-        ]
-
+  defp sign_request(%Account{name: account_name, key: account_key}, data) do
     key =
       account_key
       |> Base.decode64!()
@@ -104,15 +109,17 @@ defmodule AzureStorage.Request do
       :crypto.hmac(:sha256, key, data)
       |> Base.encode64()
 
-    auth_key = {:authorization, "SharedKey #{account_name}:#{signature}"}
-
-    [auth_key | headers]
+    {:authorization, "SharedKey #{account_name}:#{signature}"}
   end
 
   defp generate_headers("table") do
+    now = get_date()
+
     [
       {:accept, "application/json;odata=minimalmetadata"},
-      {:dataserviceversion, "3.0;NetFx"}
+      {:dataserviceversion, "3.0;NetFx"},
+      {:"x-ms-version", "2018-03-28"},
+      {:"x-ms-date", now}
     ]
   end
 
