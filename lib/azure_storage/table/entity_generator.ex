@@ -2,10 +2,10 @@ defmodule AzureStorage.Table.EntityGenerator do
   alias AzureStorage.Table.{Entity, EntityDescriptor}
 
   def partition_key(%EntityDescriptor{} = entity_descriptor, value),
-    do: string(entity_descriptor, "PartitionKey", value)
+    do: Map.put(entity_descriptor, :PartitionKey, string(value))
 
   def row_key(%EntityDescriptor{} = entity_descriptor, value),
-    do: string(entity_descriptor, "RowKey", value)
+    do: Map.put(entity_descriptor, :RowKey, string(value))
 
   def int32(%EntityDescriptor{} = entity_descriptor, field, value),
     do: EntityDescriptor.update_field(entity_descriptor, field, int32(value))
