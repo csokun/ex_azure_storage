@@ -1,4 +1,5 @@
 defmodule AzureStorage.Table do
+  alias AzureStorage.Table.EntityDescriptor
   alias AzureStorage.Core.Account
   alias AzureStorage.Request
 
@@ -13,10 +14,9 @@ defmodule AzureStorage.Table do
     |> Request.get(@storage_service, query)
   end
 
-  # def insert_entity(%Account{} = account, table_name, entity_descriptor \\ %{}) do
-  #   # make sure entity has partition key & row key
-  #   get_in(entity_descriptor, [:PartitionKey, :_])
-
-  #   account
-  # end
+  def insert_entity(%Account{} = account, table_name, %EntityDescriptor{} = entity_descriptor) do
+    query = "#{table_name}"
+    body = entity_descriptor |> Jason.encode!()
+    account |> Request.post(@storage_service, query, body, [])
+  end
 end

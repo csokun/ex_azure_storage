@@ -66,7 +66,7 @@ defmodule AzureStorage.Request do
     do: setup_request_headers(account, storage_service, method, query, "")
 
   defp setup_request_headers(
-         %Account{name: account_name, key: account_key},
+         %Account{name: account_name} = account,
          "table" = storage_service,
          method,
          query,
@@ -77,7 +77,7 @@ defmodule AzureStorage.Request do
     canonical_resource = get_canonical_resource(storage_service, account_name, query)
     data = "#{method}\n\n\n#{headers[:"x-ms-date"]}\n#{canonical_resource}"
 
-    auth_key = sign_request(account_key, data)
+    auth_key = account |> sign_request(data)
     [auth_key | headers]
   end
 
