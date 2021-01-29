@@ -13,10 +13,10 @@ defmodule AzureStorage.Table do
     |> Request.get(@storage_service, query)
   end
 
-  def insert_entity(%Account{} = account, table_name, entity_descriptor \\ %{}) do
-    # make sure entity has partition key & row key
-    get_in(entity_descriptor, [:PartitionKey, :_])
+  # def insert_entity(%Account{} = account, table_name, entity_descriptor \\ %{}) do
+  #   # make sure entity has partition key & row key
+  #   get_in(entity_descriptor, [:PartitionKey, :_])
 
-    account
-  end
+  #   account
+  # end
 end
