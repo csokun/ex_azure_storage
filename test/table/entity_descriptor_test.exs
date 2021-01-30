@@ -9,7 +9,6 @@ defmodule AzureStorage.Table.EntityDescriptorTest do
         %EntityDescriptor{}
         |> partition_key("partition-key")
         |> row_key("row-key")
-        |> IO.inspect()
 
       assert %EntityDescriptor{
                PartitionKey: %Entity{_: "partition-key", "$": "Edm.String"},
