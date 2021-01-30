@@ -184,7 +184,7 @@ defmodule AzureStorage.Request do
       query_string
       |> String.split("&")
       |> Enum.sort(:asc)
-      |> Enum.map(fn line -> String.replace(line, "=", ":") end)
+      |> Enum.map(fn line -> String.replace(line, "=", ":", global: false) end)
       |> Enum.join("\n")
 
     IO.puts("#{canonical} - #{query_string}")
