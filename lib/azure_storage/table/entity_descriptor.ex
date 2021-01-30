@@ -27,21 +27,17 @@ defimpl Jason.Encoder, for: [AzureStorage.Table.EntityDescriptor] do
     |> Enum.reduce(%{}, fn {prop, %Entity{} = entity}, map ->
       encode_field(map, prop, entity)
     end)
-    |> IO.inspect()
     |> Jason.encode!()
   end
 
   defp encode_field(map, prop, %Entity{"$": type, _: value}) do
     case type do
-      t when t in ["Edm.String", "Edm.Guid"] ->
-        Map.put(map, prop, "#{value}")
-
-      t when t in ["Edm.Int32", "Edm.Int64", "Edm.Double"] ->
+      t when t in ["Edm.String", "Edm.Int32", "Edm.Double"] ->
         Map.put(map, prop, value)
 
       _ ->
         map
-        |> Map.put(prop, value)
+        |> Map.put(prop, "#{value}")
         |> Map.put("#{prop}@odata", type)
     end
   end
