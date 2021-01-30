@@ -112,6 +112,7 @@ defmodule AzureStorage.Request do
     data = "#{method}\n\n\n#{content_length}\n\n#{@content_type}\n\n\n\n\n\n\n#{headers_uri_str}"
 
     auth_key = account |> sign_request(data)
+    # IO.puts("data:#{inspect(data)}\nsignature: #{inspect(auth_key)}")
     [auth_key | headers]
   end
 
@@ -140,9 +141,11 @@ defmodule AzureStorage.Request do
   end
 
   defp generate_headers(_, options) do
+    now = get_date()
+
     [
       {:"x-ms-version", @api_version},
-      {:"x-ms-date", get_date()},
+      {:"x-ms-date", now},
       {:"Content-Type", @content_type}
     ] ++ options
   end
@@ -187,7 +190,7 @@ defmodule AzureStorage.Request do
       |> Enum.map(fn line -> String.replace(line, "=", ":", global: false) end)
       |> Enum.join("\n")
 
-    IO.puts("#{canonical} - #{query_string}")
+    # IO.puts("#{canonical} - #{query_string}")
 
     case canonical == query_string do
       true -> "/#{account_name}/#{canonical}"
