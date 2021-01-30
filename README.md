@@ -14,6 +14,21 @@ def deps do
   ]
 end
 ```
+## Usage
+
+Common usage
+
+```elixir
+import AzureStorage.Core.Account
+import AzureStorage.Queue
+
+account = %Account{name: "azure-account-name", key: "azure-account-key"}
+queue_name="sampleq"
+
+account 
+  |> Queue.get_messages(queue_name, [number_of_messages: 25, visibility_timeout: 60])
+
+```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can

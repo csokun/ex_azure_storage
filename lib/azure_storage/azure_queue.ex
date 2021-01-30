@@ -57,11 +57,24 @@ defmodule AzureStorage.Queue do
     query =
       "#{queue_name}/messages?visibilitytimeout=#{visibility_timeout}&messagettl=#{message_ttl}"
 
-    encoded_message = message |> Base.encode64()
-    body = "<QueueMessage><MessageText>#{encoded_message}</MessageText></QueueMessage>"
+    body = create_message_body_xml(message)
 
     account
     |> Request.post(@storage_service, query, body)
+    |> parse_queue_message_response()
+  end
+
+  def update_message(%Account{} = account, queue_name, pop_receipt, message, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.create_message_options())
+    visibility_timeout = opts[:visibility_timeout]
+
+    query =
+      "#{queue_name}/messages?popreceipt=#{pop_receipt}visibilitytimeout=#{visibility_timeout}"
+
+    body = create_message_body_xml(message)
+
+    account
+    |> Request.put(@storage_service, query, body)
     |> parse_queue_message_response()
   end
 
@@ -114,5 +127,10 @@ defmodule AzureStorage.Queue do
         messages = get_in(list, ["QueueMessage"])
         {:ok, %{Items: messages}}
     end
+  end
+
+  defp create_message_body_xml(message) do
+    encoded_message = message |> Base.encode64()
+    "<QueueMessage><MessageText>#{encoded_message}</MessageText></QueueMessage>"
   end
 end

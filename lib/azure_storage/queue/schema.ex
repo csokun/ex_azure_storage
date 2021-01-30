@@ -25,4 +25,9 @@ defmodule AzureStorage.Queue.Schema do
         default: 1
       ]
     ]
+
+  def update_message_options,
+    do: [
+      visibility_timeout: @visibility_timeout ++ [default: 0]
+    ]
 end
