@@ -1,8 +1,8 @@
 defmodule AzureStorage.Table.EntityDescriptor do
   alias AzureStorage.Table.Entity
 
-  defstruct PartitionKey: %Entity{},
-            RowKey: %Entity{},
+  defstruct PartitionKey: %Entity{_: "", "$": "Edm.String"},
+            RowKey: %Entity{_: "", "$": "Edm.String"},
             Fields: %{},
             ETag: nil
 
@@ -17,10 +17,34 @@ defmodule AzureStorage.Table.EntityDescriptor do
 end
 
 defimpl Jason.Encoder, for: [AzureStorage.Table.EntityDescriptor] do
+  alias AzureStorage.Table.Entity
+
   def encode(%AzureStorage.Table.EntityDescriptor{} = ed, _opts) do
     ed
-    |> Map.take([:PartitionKey, :RowKey, :ETag])
+    |> Map.take([:PartitionKey, :RowKey])
     |> Map.merge(ed |> Map.get(:Fields))
+    |> Map.to_list()
+    |> Enum.reduce(%{}, fn {prop, %Entity{} = entity}, map ->
+      encode_field(map, prop, entity)
+    end)
+    |> IO.inspect()
     |> Jason.encode!()
   end
+
+  defp encode_field(map, prop, %Entity{"$": type, _: value}) do
+    case type do
+      t when t in ["Edm.String", "Edm.Guid"] ->
+        Map.put(map, prop, "#{value}")
+
+      t when t in ["Edm.Int32", "Edm.Int64", "Edm.Double"] ->
+        Map.put(map, prop, value)
+
+      _ ->
+        map
+        |> Map.put(prop, value)
+        |> Map.put("#{prop}@odata", type)
+    end
+  end
+
+  defp encode_field(map, _, _), do: map
 end

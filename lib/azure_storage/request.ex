@@ -12,8 +12,8 @@ defmodule AzureStorage.Request do
       ) do
     method = "GET"
     url = "https://#{account_name}.#{storage_service}.core.windows.net/#{query}"
-    headers = account |> setup_request_headers(storage_service, method, query)
-    Client.get(url, headers, options)
+    headers = account |> build_request_headers(storage_service, method, query, options)
+    Client.get(url, headers, [])
   end
 
   def put(%Account{} = account, storage_service, query) do
@@ -30,70 +30,85 @@ defmodule AzureStorage.Request do
     method = "PUT"
     url = "https://#{account_name}.#{storage_service}.core.windows.net/#{query}"
 
-    content_length =
-      case String.length(body) do
-        0 -> ""
-        len -> "#{len}"
-      end
+    headers =
+      account
+      |> build_request_headers(
+        storage_service,
+        method,
+        query,
+        content_length_header(body) ++ options
+      )
 
-    headers = account |> setup_request_headers(storage_service, method, query, content_length)
-    Client.put(url, body, headers, options)
+    Client.put(url, body, headers, [])
   end
 
   def post(%Account{name: account_name} = account, storage_service, query, body, options \\ []) do
     method = "POST"
     url = "https://#{account_name}.#{storage_service}.core.windows.net/#{query}"
 
-    content_length =
-      case String.length(body) do
-        0 -> ""
-        len -> "#{len}"
-      end
+    headers =
+      account
+      |> build_request_headers(
+        storage_service,
+        method,
+        query,
+        content_length_header(body) ++ options
+      )
 
-    headers = account |> setup_request_headers(storage_service, method, query, content_length)
-    Client.post(url, body, headers, options)
+    Client.post(url, body, headers, [])
   end
 
   def delete(%Account{name: account_name} = account, storage_service, query, options \\ []) do
     method = "DELETE"
     url = "https://#{account_name}.#{storage_service}.core.windows.net/#{query}"
-    headers = account |> setup_request_headers(storage_service, method, query)
-    Client.delete(url, headers, options)
+    headers = account |> build_request_headers(storage_service, method, query, options)
+    Client.delete(url, headers, [])
   end
 
   # -------------------- helpers -----------------------
-  defp setup_request_headers(%Account{} = account, storage_service, method, query),
-    do: setup_request_headers(account, storage_service, method, query, "")
 
-  defp setup_request_headers(
+  defp build_request_headers(
          %Account{name: account_name} = account,
          "table" = storage_service,
          method,
          query,
-         _
+         options
        ) do
-    headers = generate_headers(storage_service)
+    headers = generate_headers(storage_service, options)
     # sign payload
+    content_type =
+      case headers[:"Content-Type"] do
+        nil -> ""
+        value -> "#{value}"
+      end
+
     canonical_resource = get_canonical_resource(storage_service, account_name, query)
-    data = "#{method}\n\n\n#{headers[:"x-ms-date"]}\n#{canonical_resource}"
+    data = "#{method}\n\n#{content_type}\n#{headers[:"x-ms-date"]}\n#{canonical_resource}"
 
     auth_key = account |> sign_request(data)
     [auth_key | headers]
   end
 
-  defp setup_request_headers(
+  defp build_request_headers(
          %Account{name: account_name} = account,
          storage_service,
          method,
          query,
-         content_length
+         options
        ) do
-    headers = generate_headers(storage_service)
+    headers = generate_headers(storage_service, options)
     canonical_headers = headers |> get_canonical_headers()
 
     # sign payload
     canonical_resource = get_canonical_resource(storage_service, account_name, query)
     headers_uri_str = "#{canonical_headers}\n#{canonical_resource}"
+
+    content_length =
+      case headers[:"content-length"] do
+        nil -> ""
+        value -> "#{value}"
+      end
+
     data = "#{method}\n\n\n#{content_length}\n\n#{@content_type}\n\n\n\n\n\n\n#{headers_uri_str}"
 
     auth_key = account |> sign_request(data)
@@ -109,10 +124,11 @@ defmodule AzureStorage.Request do
       :crypto.hmac(:sha256, key, data)
       |> Base.encode64()
 
+    # IO.puts("data:#{inspect(data)}\nsignature: #{signature}")
     {:authorization, "SharedKey #{account_name}:#{signature}"}
   end
 
-  defp generate_headers("table") do
+  defp generate_headers("table", options) do
     now = get_date()
 
     [
@@ -120,15 +136,15 @@ defmodule AzureStorage.Request do
       {:dataserviceversion, "3.0;NetFx"},
       {:"x-ms-version", "2018-03-28"},
       {:"x-ms-date", now}
-    ]
+    ] ++ options
   end
 
-  defp generate_headers(_) do
+  defp generate_headers(_, options) do
     [
       {:"x-ms-version", @api_version},
       {:"x-ms-date", get_date()},
       {:"Content-Type", @content_type}
-    ]
+    ] ++ options
   end
 
   defp get_date() do
@@ -176,6 +192,13 @@ defmodule AzureStorage.Request do
     case canonical == query_string do
       true -> "/#{account_name}/#{canonical}"
       false -> "/#{account_name}/#{container}\n#{canonical}"
+    end
+  end
+
+  defp content_length_header(body) do
+    case String.length(body) do
+      0 -> []
+      len -> [{:"content-length", len}]
     end
   end
 end

@@ -17,6 +17,12 @@ defmodule AzureStorage.Table do
   def insert_entity(%Account{} = account, table_name, %EntityDescriptor{} = entity_descriptor) do
     query = "#{table_name}"
     body = entity_descriptor |> Jason.encode!()
-    account |> Request.post(@storage_service, query, body, [])
+
+    options = [
+      {:Prefer, "return-no-content"},
+      {:"Content-Type", "application/json"}
+    ]
+
+    account |> Request.post(@storage_service, query, body, options)
   end
 end

@@ -50,13 +50,14 @@ defmodule Http.Client do
 
   # defp process_response({:error, reason}), do: {:error, reason}
 
-  defp parse_body(_, ""), do: ""
-  # defp parse_body(c, b), do: {:ok, c: c, b: b}
+  defp parse_body("", ""), do: ""
   defp parse_body("application/json" <> _, body), do: Jason.decode!(body)
   defp parse_body(_, body), do: XmlToMap.naive_map(body)
 
   defp get_content_type(headers) do
-    {_, content_type} = Enum.find(headers, fn {k, _} -> k == "Content-Type" end)
-    content_type
+    case Enum.find(headers, fn {k, _} -> k == "Content-Type" end) do
+      {_, content_type} -> content_type
+      _ -> ""
+    end
   end
 end

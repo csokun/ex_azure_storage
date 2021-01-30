@@ -24,7 +24,7 @@ defmodule AzureStorage.Table.EntityDescriptorTest do
     test "it should be able to encode mandatory fields to json" do
       json = %EntityDescriptor{} |> Jason.encode!()
 
-      assert "{\"ETag\":null,\"PartitionKey\":{\"$\":\"\",\"_\":null},\"RowKey\":{\"$\":\"\",\"_\":null}}" ==
+      assert "{\"PartitionKey\":\"\",\"RowKey\":\"\"}" ==
                json
     end
 
@@ -34,7 +34,7 @@ defmodule AzureStorage.Table.EntityDescriptorTest do
         |> int32("Age", 32)
         |> Jason.encode!()
 
-      assert "{\"ETag\":null,\"PartitionKey\":{\"$\":\"\",\"_\":null},\"RowKey\":{\"$\":\"\",\"_\":null},\"Age\":{\"$\":\"Edm.Int32\",\"_\":32}}" ==
+      assert "{\"PartitionKey\":\"\",\"RowKey\":\"\",\"Age\":32}" ==
                json
     end
   end
