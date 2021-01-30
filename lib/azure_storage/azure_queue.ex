@@ -110,7 +110,7 @@ defmodule AzureStorage.Queue do
   defp parse_queue_message_response({:ok, %{"QueueMessagesList" => list}}) do
     case list == %{} do
       true ->
-        {:ok, []}
+        {:ok, nil}
 
       _ ->
         message = get_in(list, ["QueueMessage"])
@@ -124,8 +124,13 @@ defmodule AzureStorage.Queue do
         {:ok, []}
 
       _ ->
-        messages = get_in(list, ["QueueMessage"])
-        {:ok, %{Items: messages}}
+        items =
+          case get_in(list, ["QueueMessage"]) do
+            %{} = message -> [message]
+            messages -> messages
+          end
+
+        {:ok, items}
     end
   end
 
