@@ -39,11 +39,19 @@ defmodule AzureStorage.Request.Context do
     path = options[:path]
     headers_cfg = options[:headers]
 
-    # TODO: improve headers merging
+    # TODO: improve headers
+    content_length =
+      case String.length(body) do
+        0 ->
+          []
+
+        value ->
+          [{:"content-length", value}]
+      end
+
     headers =
       [
-        {:"x-ms-date", now},
-        {:"content-length", "#{String.length(body)}"}
+        {:"x-ms-date", now} | content_length
       ] ++ headers_cfg ++ default_headers
 
     context
