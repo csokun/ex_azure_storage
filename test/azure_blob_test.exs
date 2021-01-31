@@ -1,6 +1,5 @@
 defmodule AzureStorage.BlobTest do
   use ExUnit.Case, async: true
-  alias AzureStorage.Core.Account
   alias AzureStorage.Blob
   import Mox
 
@@ -11,17 +10,19 @@ defmodule AzureStorage.BlobTest do
 
   describe "list_containers" do
     setup do
-      {:ok, account} = Account.new(@account_name, @account_key)
-      %{account: account}
+      {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key)
+      %{context: context}
     end
 
-    test "it should be able to list blob containers", %{account: account} do
+    test "it should be able to list blob containers", %{context: context} do
       HttpClientMock
-      |> expect(:get, fn _url, _headers, _options ->
+      |> expect(:get, fn "https://#{@account_name}.blob.core.windows.net/?comp=list",
+                         _headers,
+                         _options ->
         {:error, %HTTPoison.Error{reason: "Not found"}}
       end)
 
-      result = account |> Blob.list_containers()
+      result = context |> Blob.list_containers()
       assert {:error, "Not found"} == result
     end
   end

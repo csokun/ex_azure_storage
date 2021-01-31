@@ -19,14 +19,12 @@ end
 Common usage
 
 ```elixir
-import AzureStorage.Core.Account
-import AzureStorage.Queue
-
-account = %Account{name: "azure-account-name", key: "azure-account-key"}
+{:ok, context} = AzureStorage.create_queue_service("azure-account-name", "azure-account-key")
 queue_name="sampleq"
 
-account 
-  |> Queue.get_messages(queue_name, [number_of_messages: 25, visibility_timeout: 60])
+context
+  |> AzureStorage.Queue.get_messages(queue_name, [number_of_messages: 25, visibility_timeout: 60])
+  |> IO.inspect()
 
 ```
 

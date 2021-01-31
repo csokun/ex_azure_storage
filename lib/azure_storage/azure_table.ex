@@ -4,48 +4,60 @@ defmodule AzureStorage.Table do
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/table-service-rest-api
   """
   alias AzureStorage.Table.EntityDescriptor
-  alias AzureStorage.Core.Account
-  alias AzureStorage.Request
+  alias AzureStorage.Request.Context
+  import AzureStorage.Request
 
-  @storage_service "table"
-
-  def retrieve_entity(%Account{} = account, table_name, partition_key, row_key) do
+  def retrieve_entity(%Context{service: "table"} = context, table_name, partition_key, row_key) do
     query =
       "#{table_name}(PartitionKey='#{partition_key}',RowKey='#{row_key}')"
       |> String.replace("'", "%27")
 
-    account
-    |> Request.get(@storage_service, query)
+    context
+    |> build(method: "GET", path: query)
+    |> request()
   end
 
   @doc """
   Deletes an existing entity in a table.
   """
-  def delete_entity(%Account{} = account, table_name, partition_key, row_key, etag \\ "*") do
+  def delete_entity(
+        %Context{service: "table"} = context,
+        table_name,
+        partition_key,
+        row_key,
+        etag \\ "*"
+      ) do
     query =
       "#{table_name}(PartitionKey='#{partition_key}',RowKey='#{row_key}')"
       |> String.replace("'", "%27")
 
-    options = [
+    headers = [
       {:"if-match", etag}
     ]
 
-    account
-    |> Request.delete(@storage_service, query, options)
+    context
+    |> build(method: "DELETE", path: query, headers: headers)
+    |> request()
   end
 
   @doc """
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/insert-entity
   """
-  def insert_entity(%Account{} = account, table_name, %EntityDescriptor{} = entity_descriptor) do
+  def insert_entity(
+        %Context{service: "table"} = context,
+        table_name,
+        %EntityDescriptor{} = entity_descriptor
+      ) do
     query = "#{table_name}"
     body = entity_descriptor |> Jason.encode!()
 
-    options = [
+    headers = [
       {:Prefer, "return-no-content"},
       {:"Content-Type", "application/json"}
     ]
 
-    account |> Request.post(@storage_service, query, body, options)
+    context
+    |> build(method: "POST", path: query, body: body, headers: headers)
+    |> request()
   end
 end
