@@ -64,13 +64,18 @@ defmodule AzureStorage.Queue do
     |> parse_queue_message_response()
   end
 
-  def update_message(%Context{service: "queue"} = context, queue_name, pop_receipt, message, options \\ []) do
+  def update_message(
+        %Context{service: "queue"} = context,
+        queue_name,
+        pop_receipt,
+        message,
+        options \\ []
+      ) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.create_message_options())
     visibility_timeout = opts[:visibility_timeout]
 
     query =
       "#{queue_name}/messages?popreceipt=#{pop_receipt}visibilitytimeout=#{visibility_timeout}"
-
 
     context
     |> build(method: "PUT", path: query, body: create_message_body_xml(message))
