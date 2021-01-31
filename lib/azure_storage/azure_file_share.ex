@@ -7,7 +7,7 @@ defmodule AzureStorage.FileShare do
     query = "?comp=list"
 
     context
-    |> build(method: "GET", path: query)
+    |> build(method: :get, path: query)
     |> request()
     |> parse_enumeration_results("Share")
   end
@@ -16,7 +16,7 @@ defmodule AzureStorage.FileShare do
     query = "#{share}?restype=share"
 
     context
-    |> build(method: "PUT", path: query)
+    |> build(method: :put, path: query)
     |> request()
   end
 
@@ -24,7 +24,7 @@ defmodule AzureStorage.FileShare do
     query = "#{share}?restype=share"
 
     context
-    |> build(method: "DELETE", path: query)
+    |> build(method: :delete, path: query)
     |> request()
   end
 end

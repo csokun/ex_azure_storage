@@ -13,7 +13,7 @@ defmodule AzureStorage.Table do
       |> String.replace("'", "%27")
 
     context
-    |> build(method: "GET", path: query)
+    |> build(method: :get, path: query)
     |> request()
   end
 
@@ -36,7 +36,7 @@ defmodule AzureStorage.Table do
     ]
 
     context
-    |> build(method: "DELETE", path: query, headers: headers)
+    |> build(method: :delete, path: query, headers: headers)
     |> request()
   end
 
@@ -57,7 +57,7 @@ defmodule AzureStorage.Table do
     ]
 
     context
-    |> build(method: "POST", path: query, body: body, headers: headers)
+    |> build(method: :post, path: query, body: body, headers: headers)
     |> request()
   end
 end

@@ -32,7 +32,7 @@ defmodule AzureStorageTest do
         headers: headers,
         url: url,
         path: path
-      } = context |> Context.build(method: "GET", path: "?comp=list")
+      } = context |> Context.build(method: :get, path: "?comp=list")
 
       assert "https://sample.blob.core.windows.net/?comp=list" = url
       assert "?comp=list" = path

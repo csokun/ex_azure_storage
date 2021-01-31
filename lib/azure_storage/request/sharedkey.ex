@@ -41,7 +41,18 @@ defmodule AzureStorage.Request.SharedKey do
   defp table_service_request(%Context{headers: headers, method: method} = context) do
     canonical_resource = context |> Context.get_canonical_resource()
     content_type = headers |> get_content_type()
-    "#{method}\n\n#{content_type}\n#{headers[:"x-ms-date"]}\n#{canonical_resource}"
+
+    [
+      method_atom_to_string(method),
+      "\n",
+      "\n",
+      content_type,
+      "\n",
+      headers[:"x-ms-date"],
+      "\n",
+      canonical_resource
+    ]
+    |> IO.iodata_to_binary()
   end
 
   defp generic_service_request(%Context{method: method, headers: headers} = context) do
@@ -51,8 +62,28 @@ defmodule AzureStorage.Request.SharedKey do
     content_length = headers |> get_content_length()
     content_type = headers |> get_content_type()
 
-    "#{method}\n\n\n#{content_length}\n\n#{content_type}\n\n\n\n\n\n\n#{headers_uri_str}"
+    [
+      method_atom_to_string(method),
+      "\n",
+      "\n",
+      "\n",
+      content_length,
+      "\n",
+      "\n",
+      content_type,
+      "\n",
+      "\n",
+      "\n",
+      "\n",
+      "\n",
+      "\n",
+      "\n",
+      headers_uri_str
+    ]
+    |> IO.iodata_to_binary()
   end
+
+  defp method_atom_to_string(method), do: method |> Atom.to_string() |> String.upcase()
 
   defp get_content_length(headers) do
     case headers[:"content-length"] do

@@ -14,7 +14,7 @@ defmodule AzureStorage.Queue do
     query = "?comp=list"
 
     context
-    |> build(method: "GET", path: query)
+    |> build(method: :get, path: query)
     |> request()
     |> parse_enumeration_results("Queue")
   end
@@ -27,7 +27,7 @@ defmodule AzureStorage.Queue do
     query = name
 
     context
-    |> build(method: "PUT", path: query)
+    |> build(method: :put, path: query)
     |> request()
   end
 
@@ -39,7 +39,7 @@ defmodule AzureStorage.Queue do
     query = name
 
     context
-    |> build(method: "DELETE", path: query)
+    |> build(method: :delete, path: query)
     |> request()
   end
 
@@ -59,7 +59,7 @@ defmodule AzureStorage.Queue do
       "#{queue_name}/messages?visibilitytimeout=#{visibility_timeout}&messagettl=#{message_ttl}"
 
     context
-    |> build(method: "POST", path: query, body: create_message_body_xml(message))
+    |> build(method: :post, path: query, body: create_message_body_xml(message))
     |> request()
     |> parse_queue_message_response()
   end
@@ -78,7 +78,7 @@ defmodule AzureStorage.Queue do
       "#{queue_name}/messages?popreceipt=#{pop_receipt}visibilitytimeout=#{visibility_timeout}"
 
     context
-    |> build(method: "PUT", path: query, body: create_message_body_xml(message))
+    |> build(method: :put, path: query, body: create_message_body_xml(message))
     |> request()
     |> parse_queue_message_response()
   end
@@ -90,7 +90,7 @@ defmodule AzureStorage.Queue do
     query = "#{queue_name}/messages/#{message_id}?popreceipt=#{pop_receipt}"
 
     context
-    |> build(method: "DELETE", path: query)
+    |> build(method: :delete, path: query)
     |> request()
   end
 
@@ -109,7 +109,7 @@ defmodule AzureStorage.Queue do
       }"
 
     context
-    |> build(method: "GET", path: query)
+    |> build(method: :get, path: query)
     |> request()
     |> parse_queue_messages_response()
   end

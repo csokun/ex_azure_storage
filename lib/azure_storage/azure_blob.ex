@@ -7,7 +7,7 @@ defmodule AzureStorage.Blob do
     query = "?comp=list"
 
     context
-    |> build(method: "GET", path: query)
+    |> build(method: :get, path: query)
     |> request()
     |> parse_enumeration_results("Container")
   end
@@ -16,7 +16,7 @@ defmodule AzureStorage.Blob do
     query = "#{container}?restype=container"
 
     context
-    |> build(method: "GET", path: query)
+    |> build(method: :get, path: query)
     |> request()
   end
 
@@ -24,7 +24,7 @@ defmodule AzureStorage.Blob do
     query = "#{container}?restype=container&comp=metadata"
 
     context
-    |> build(method: "GET", path: query)
+    |> build(method: :get, path: query)
     |> request()
   end
 
@@ -37,7 +37,7 @@ defmodule AzureStorage.Blob do
       |> Enum.map(fn {k, v} -> %{"x-ms-meta-#{k}": v} end)
 
     context
-    |> build(method: "PUT", body: "", path: query, headers: headers)
+    |> build(method: :put, body: "", path: query, headers: headers)
     |> request()
   end
 
@@ -46,7 +46,7 @@ defmodule AzureStorage.Blob do
     query = "#{container}?restype=container&comp=list&maxresults=1"
 
     context
-    |> build(method: "GET", path: query)
+    |> build(method: :get, path: query)
     |> request()
     |> parse_enumeration_results("Blob")
   end
@@ -59,7 +59,7 @@ defmodule AzureStorage.Blob do
     query = "#{container}?restype=container"
 
     context
-    |> build(method: "PUT", path: query)
+    |> build(method: :put, path: query)
     |> request()
   end
 
@@ -67,7 +67,7 @@ defmodule AzureStorage.Blob do
     query = "#{container}?restype=container"
 
     context
-    |> build(method: "DELETE", path: query)
+    |> build(method: :delete, path: query)
     |> request()
   end
 
@@ -76,7 +76,7 @@ defmodule AzureStorage.Blob do
     headers = [{:"x-ms-blob-type", content_type}, {:"x-ms-blob-content-encoding", "UTF8"}]
 
     context
-    |> build(method: "PUT", path: query, body: content, headers: headers)
+    |> build(method: :put, path: query, body: content, headers: headers)
     |> request()
   end
 
@@ -84,7 +84,7 @@ defmodule AzureStorage.Blob do
     query = "#{container}/#{blob_name}"
 
     context
-    |> build(method: "GET", path: query)
+    |> build(method: :get, path: query)
     |> request()
   end
 
@@ -92,7 +92,7 @@ defmodule AzureStorage.Blob do
     query = "#{container}/#{blob_name}"
 
     context
-    |> build(method: "DELETE", path: query)
+    |> build(method: :delete, path: query)
     |> request()
   end
 end
