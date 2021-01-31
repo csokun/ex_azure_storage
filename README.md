@@ -19,7 +19,7 @@ end
 Common usage
 
 ```elixir
-{:ok, context}= AzureStorage.create_queue_service("azure-account-name", "azure-account-key")
+{:ok, context} = AzureStorage.create_queue_service("azure-account-name", "azure-account-key")
 queue_name="sampleq"
 
 context
