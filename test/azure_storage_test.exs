@@ -8,7 +8,7 @@ defmodule AzureStorageTest do
 
   @account_name "sample"
   @account_key "ZHVtbXk="
-  @generic_headers [{"x-ms-version", "2019-07-07"}, {:"Content-Type", "application/xml"}]
+  @generic_headers [{:"x-ms-version", "2019-07-07"}, {:"Content-Type", "application/xml"}]
 
   describe "create blob service" do
     setup do
@@ -27,22 +27,22 @@ defmodule AzureStorageTest do
              } = context
     end
 
-    test "clone blob service context", %{context: context} do
+    test "build blob service request context", %{context: context} do
       %Context{
         headers: headers,
         url: url,
         path: path
-      } = context |> Context.clone("GET", "?comp=list")
+      } = context |> Context.build(method: "GET", path: "?comp=list")
 
       assert "https://sample.blob.core.windows.net/?comp=list" = url
       assert "?comp=list" = path
-      assert {"x-ms-date", _} = headers |> Enum.find(fn {"x-ms-date", _} -> true end)
+      assert {:"x-ms-date", _} = headers |> Enum.find(fn {:"x-ms-date", _} -> true end)
     end
   end
 
   describe "create table service" do
     @table_service_default_headers [
-      {"x-ms-version", "2019-07-07"},
+      {:"x-ms-version", "2019-07-07"},
       {:accept, "application/json;odata=minimalmetadata"},
       {:dataserviceversion, "3.0;NetFx"}
     ]

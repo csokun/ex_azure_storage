@@ -16,10 +16,10 @@ defmodule AzureStorage do
 
   # -------- helpers -------
 
-  defp create_service(account_name, account_key, service) do
+  defp create_service(account_name, account_key, service, api_version \\ "2019-07-07") do
     case Account.new(account_name, account_key) do
       {:ok, account} ->
-        {:ok, account |> Context.create(service)}
+        {:ok, account |> Context.create(service, api_version)}
 
       {:error, reason} ->
         {:error, reason}

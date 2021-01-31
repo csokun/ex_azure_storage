@@ -1,4 +1,5 @@
 defmodule AzureStorage.Request.Context do
+  alias AzureStorage.Request.Schema
   alias AzureStorage.Core.Account
 
   defstruct service: "",
@@ -16,7 +17,7 @@ defmodule AzureStorage.Request.Context do
 
     %__MODULE__{
       account: account,
-      headers: [{"x-ms-version", app_version}] ++ default_service_headers(service),
+      headers: [{:"x-ms-version", app_version}] ++ default_service_headers(service),
       service: service,
       base_url: base_url,
       url: base_url,
@@ -24,19 +25,31 @@ defmodule AzureStorage.Request.Context do
     }
   end
 
-  def clone(
+  @doc """
+  Build request context
+  """
+  def build(
         %__MODULE__{headers: default_headers, base_url: base_url} = context,
-        method,
-        path,
-        headers \\ []
+        config \\ []
       ) do
     now = get_date()
-    # merge headers
-    headers = [{"x-ms-date", now}] ++ headers ++ default_headers
+    {:ok, options} = NimbleOptions.validate(config, Schema.build_options())
+    body = options[:body]
+    method = options[:method]
+    path = options[:path]
+    headers_cfg = options[:headers]
+
+    # TODO: improve headers merging
+    headers =
+      [
+        {:"x-ms-date", now},
+        {:"content-length", "#{String.length(body)}"}
+      ] ++ headers_cfg ++ default_headers
 
     context
     |> Map.put(:method, method)
     |> Map.put(:headers, headers)
+    |> Map.put(:body, body)
     |> Map.put(:path, path)
     |> Map.put(:url, "#{base_url}/#{path}")
   end

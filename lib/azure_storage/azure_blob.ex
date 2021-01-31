@@ -1,92 +1,98 @@
 defmodule AzureStorage.Blob do
-  alias AzureStorage.Core.Account
-  alias AzureStorage.Request
+  alias AzureStorage.Request.Context
+  import AzureStorage.Request
   import AzureStorage.Parser
-  @storage_service "blob"
 
-  def list_containers(%Account{} = account) do
+  def list_containers(%Context{service: "blob"} = context) do
     query = "?comp=list"
 
-    account
-    |> Request.get(@storage_service, query)
+    context
+    |> build(method: "GET", path: query)
+    |> request()
     |> parse_enumeration_results("Container")
   end
 
-  def get_container_properties(%Account{} = account, container) do
+  def get_container_properties(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container"
 
-    account
-    |> Request.get(@storage_service, query)
+    context
+    |> build(method: "GET", path: query)
+    |> request()
   end
 
-  def get_container_metadata(%Account{} = account, container) do
+  def get_container_metadata(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container&comp=metadata"
 
-    account
-    |> Request.get(@storage_service, query)
+    context
+    |> build(method: "GET", path: query)
+    |> request()
   end
 
-  def set_container_metadata(%Account{} = account, container, metadata) do
+  def set_container_metadata(%Context{service: "blob"} = context, container, metadata) do
     query = "#{container}?restype=container&comp=metadata"
 
     # TODO: sanitize meta-key
-    options =
+    headers =
       metadata
       |> Enum.map(fn {k, v} -> %{"x-ms-meta-#{k}": v} end)
 
-    body = ""
-
-    account
-    |> Request.put(@storage_service, query, body, options)
+    context
+    |> build(method: "PUT", body: "", path: query, headers: headers)
+    |> request()
   end
 
   # @dev - filter by prefix
-  def list_blobs(%Account{} = account, container) do
+  def list_blobs(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container&comp=list&maxresults=1"
 
-    account
-    |> Request.get(@storage_service, query)
+    context
+    |> build(method: "GET", path: query)
+    |> request()
     |> parse_enumeration_results("Blob")
   end
 
-  def create_container(%Account{} = account, container) do
+  def create_container(%Context{service: "blob"} = context, container) do
     # @dev
     # version: 2019-02-02+ requires
     # x-ms-default-encryption-scope
     # x-ms-deny-encryption-scope-override: (true | false)
     query = "#{container}?restype=container"
 
-    account
-    |> Request.put(@storage_service, query)
+    context
+    |> build(method: "PUT", path: query)
+    |> request()
   end
 
-  def delete_container(%Account{} = account, container) do
+  def delete_container(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container"
 
-    account
-    |> Request.delete(@storage_service, query)
+    context
+    |> build(method: "DELETE", path: query)
+    |> request()
   end
 
-  def create_blob(%Account{} = account, container, name, content, content_type) do
+  def create_blob(%Context{service: "blob"} = context, container, name, content, content_type) do
     query = "#{container}/#{name}"
-    body = content
-    options = %{"x-ms-blob-type": content_type, "x-ms-blob-content-encoding": "UTF8"}
+    headers = [{:"x-ms-blob-type", content_type}, {:"x-ms-blob-content-encoding", "UTF8"}]
 
-    account
-    |> Request.put(@storage_service, query, body, options)
+    context
+    |> build(method: "PUT", path: query, body: content, headers: headers)
+    |> request()
   end
 
-  def get_blob_content(%Account{} = account, container, blob_name) do
+  def get_blob_content(%Context{service: "blob"} = context, container, blob_name) do
     query = "#{container}/#{blob_name}"
 
-    account
-    |> Request.get(@storage_service, query)
+    context
+    |> build(method: "GET", path: query)
+    |> request()
   end
 
-  def delete_blob(%Account{} = account, container, blob_name) do
+  def delete_blob(%Context{service: "blob"} = context, container, blob_name) do
     query = "#{container}/#{blob_name}"
 
-    account
-    |> Request.delete(@storage_service, query)
+    context
+    |> build(method: "DELETE", path: query)
+    |> request()
   end
 end

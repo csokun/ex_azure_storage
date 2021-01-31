@@ -1,8 +1,33 @@
 defmodule AzureStorage.Request do
+  require Logger
+  alias AzureStorage.Request.{Context, SharedKey}
   alias AzureStorage.Core.Account
   alias Http.Client
+
   @api_version "2019-07-07"
   @content_type "application/xml"
+
+  def build(%Context{} = context, config \\ []), do: Context.build(context, config)
+
+  def request(%Context{method: "GET", url: url} = context) do
+    headers = context |> SharedKey.sign_request()
+    Client.get(url, headers, [])
+  end
+
+  def request(%Context{method: "DELETE", url: url} = context) do
+    headers = context |> SharedKey.sign_request()
+    Client.delete(url, headers, [])
+  end
+
+  def request(%Context{method: "POST", url: url, body: body} = context) do
+    headers = context |> SharedKey.sign_request()
+    Client.post(url, body, headers, [])
+  end
+
+  def request(%Context{method: "PUT", url: url, body: body} = context) do
+    headers = context |> SharedKey.sign_request()
+    Client.post(url, body, headers, [])
+  end
 
   def get(
         %Account{name: account_name} = account,
@@ -86,6 +111,11 @@ defmodule AzureStorage.Request do
     data = "#{method}\n\n#{content_type}\n#{headers[:"x-ms-date"]}\n#{canonical_resource}"
 
     auth_key = account |> sign_request(data)
+
+    Logger.debug(
+      "data:#{inspect(data)}\nsignature: #{inspect(auth_key)}\nheaders: #{inspect(headers)}"
+    )
+
     [auth_key | headers]
   end
 
@@ -132,12 +162,13 @@ defmodule AzureStorage.Request do
   defp generate_headers("table", options) do
     now = get_date()
 
-    [
-      {:accept, "application/json;odata=minimalmetadata"},
-      {:dataserviceversion, "3.0;NetFx"},
-      {:"x-ms-version", "2018-03-28"},
-      {:"x-ms-date", now}
-    ] ++ options
+    ([
+       {:accept, "application/json;odata=minimalmetadata"},
+       {:dataserviceversion, "3.0;NetFx"},
+       {:"x-ms-version", "2018-03-28"},
+       {:"x-ms-date", now}
+     ] ++ options)
+    |> IO.inspect()
   end
 
   defp generate_headers(_, options) do

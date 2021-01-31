@@ -1,8 +1,13 @@
 defmodule AzureStorage.Request.SharedKey do
+  require Logger
   alias AzureStorage.Request.Context
 
   def sign_request(
-        %Context{service: service, account: %{name: account_name, key: account_key}} = context
+        %Context{
+          service: service,
+          headers: headers,
+          account: %{name: account_name, key: account_key}
+        } = context
       ) do
     data =
       case service do
@@ -11,8 +16,13 @@ defmodule AzureStorage.Request.SharedKey do
       end
 
     signature = sign(account_key, data)
+    auth_key = {:authorization, "SharedKey #{account_name}:#{signature}"}
 
-    [{:authorization, "SharedKey: #{account_name}:#{signature}"}]
+    Logger.debug(
+      "data: #{inspect(data)}\nsignature: #{inspect(auth_key)}\nheaders: #{inspect(headers)}"
+    )
+
+    [auth_key | headers]
   end
 
   #
@@ -31,7 +41,6 @@ defmodule AzureStorage.Request.SharedKey do
   defp table_service_request(%Context{headers: headers, method: method} = context) do
     canonical_resource = context |> Context.get_canonical_resource()
     content_type = headers |> get_content_type()
-
     "#{method}\n\n#{content_type}\n#{headers[:"x-ms-date"]}\n#{canonical_resource}"
   end
 
