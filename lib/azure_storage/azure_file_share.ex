@@ -50,7 +50,7 @@ defmodule AzureStorage.FileShare do
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/list-directories-and-files
   """
   def dir(%Context{service: "file"} = context, share, path, options \\ []) do
-    {:ok, _} = NimbleOptions.validate(options, Schema.list_directories_and_files_options)
+    {:ok, _} = NimbleOptions.validate(options, Schema.list_directories_and_files_options())
     query = "#{share}/#{path}?restype=directory&comp=list"
 
     context
@@ -58,5 +58,4 @@ defmodule AzureStorage.FileShare do
     |> request()
     |> IO.inspect()
   end
-
 end
