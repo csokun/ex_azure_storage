@@ -1,8 +1,16 @@
 defmodule AzureStorage.Blob do
+  @moduledoc """
+  Blob Service
+  """
+
   alias AzureStorage.Request.Context
+  alias AzureStorage.Blob.Schema
   import AzureStorage.Request
   import AzureStorage.Parser
 
+  @doc """
+  The List Containers operation returns a list of the containers under the specified storage account.
+  """
   def list_containers(%Context{service: "blob"} = context) do
     query = "?comp=list"
 
@@ -12,6 +20,10 @@ defmodule AzureStorage.Blob do
     |> parse_enumeration_results("Container")
   end
 
+  @doc """
+  The Get Container Properties operation returns all user-defined metadata and system properties for the specified container.
+  The data returned does not include the container's list of blobs.
+  """
   def get_container_properties(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container"
 
@@ -20,6 +32,9 @@ defmodule AzureStorage.Blob do
     |> request()
   end
 
+  @doc """
+  The Get Container Metadata operation returns all user-defined metadata for the container.
+  """
   def get_container_metadata(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container&comp=metadata"
 
@@ -28,6 +43,9 @@ defmodule AzureStorage.Blob do
     |> request()
   end
 
+  @doc """
+  The Set Container Metadata operation sets one or more user-defined name-value pairs for the specified container.
+  """
   def set_container_metadata(%Context{service: "blob"} = context, container, metadata) do
     query = "#{container}?restype=container&comp=metadata"
 
@@ -41,9 +59,29 @@ defmodule AzureStorage.Blob do
     |> request()
   end
 
-  # @dev - filter by prefix
-  def list_blobs(%Context{service: "blob"} = context, container) do
-    query = "#{container}?restype=container&comp=list&maxresults=1"
+  @doc """
+  The List Blobs operation returns a list of the blobs under the specified container.
+  """
+  def list_blobs(%Context{service: "blob"} = context, container, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.list_blobs_options())
+    max_results = opts[:max_results]
+
+    prefix =
+      case String.length(opts[:prefix]) do
+        0 -> []
+        _ -> ["&prefix=", opts[:prefix]]
+      end
+
+    query =
+      ([
+         container,
+         "?restype=container",
+         container,
+         "&comp=list",
+         "&maxresults=",
+         max_results
+       ] ++ prefix)
+      |> IO.iodata_to_binary()
 
     context
     |> build(method: :get, path: query)
@@ -51,6 +89,10 @@ defmodule AzureStorage.Blob do
     |> parse_enumeration_results("Blob")
   end
 
+  @doc """
+  The Create Container operation creates a new container under the specified account.
+  If the container with the same name already exists, the operation fails.
+  """
   def create_container(%Context{service: "blob"} = context, container) do
     # @dev
     # version: 2019-02-02+ requires
@@ -63,6 +105,10 @@ defmodule AzureStorage.Blob do
     |> request()
   end
 
+  @doc """
+  The Delete Container operation marks the specified container for deletion.
+  The container and any blobs contained within it are later deleted during garbage collection.
+  """
   def delete_container(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container"
 
@@ -71,9 +117,15 @@ defmodule AzureStorage.Blob do
     |> request()
   end
 
-  def create_blob(%Context{service: "blob"} = context, container, name, content, content_type) do
-    query = "#{container}/#{name}"
-    headers = [{:"x-ms-blob-type", content_type}, {:"x-ms-blob-content-encoding", "UTF8"}]
+  def create_blob(
+        %Context{service: "blob"} = context,
+        container,
+        filename,
+        content,
+        _options \\ []
+      ) do
+    query = "#{container}/#{filename}"
+    headers = [{:"x-ms-blob-type", "BlockBlob"}, {:"x-ms-blob-content-encoding", "UTF8"}]
 
     context
     |> build(method: :put, path: query, body: content, headers: headers)
