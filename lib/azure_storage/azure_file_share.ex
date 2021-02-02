@@ -23,7 +23,8 @@ defmodule AzureStorage.FileShare do
   end
 
   @doc """
-  The Create Share operation creates a new share under the specified account. If the share with the same name already exists, the operation fails.
+  The Create Share operation creates a new share under the specified account. 
+  If the share with the same name already exists, the operation fails.
   """
   def create_share(%Context{service: "file"} = context, share) do
     query = "#{share}?restype=share"
@@ -34,7 +35,8 @@ defmodule AzureStorage.FileShare do
   end
 
   @doc """
-  The Delete Share operation marks the specified share or share snapshot for deletion. The share or share snapshot and any files contained within it are later deleted during garbage collection.
+  The Delete Share operation marks the specified share or share snapshot for deletion. 
+  The share or share snapshot and any files contained within it are later deleted during garbage collection.
   """
   def delete_share(%Context{service: "file"} = context, share) do
     query = "#{share}?restype=share"
@@ -45,7 +47,8 @@ defmodule AzureStorage.FileShare do
   end
 
   @doc """
-  The List Directories and Files operation returns a list of files or directories under the specified share or directory. It lists the contents only for a single level of the directory hierarchy.
+  The List Directories and Files operation returns a list of files or directories under the specified share or directory.
+  It lists the contents only for a single level of the directory hierarchy.
 
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/list-directories-and-files
   """

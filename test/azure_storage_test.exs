@@ -4,7 +4,7 @@ defmodule AzureStorageTest do
   alias AzureStorage.Request.Context
   alias AzureStorage.Core.Account
 
-  # doctest Az
+  # doctest AzureStorage
 
   @account_name "sample"
   @account_key "ZHVtbXk="

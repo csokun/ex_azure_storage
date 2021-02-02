@@ -7,7 +7,6 @@ defmodule Http.Client do
   @spec get(any, any, any) :: {:error, any} | {:ok, any}
   def get(url, headers, options) do
     http_adapter().get(url, headers, options)
-    # |> IO.inspect()
     |> process_response()
   end
 
