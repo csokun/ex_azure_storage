@@ -7,7 +7,6 @@ defmodule Http.Client do
   @spec get(any, any, any) :: {:error, any} | {:ok, any}
   def get(url, headers, options) do
     http_adapter().get(url, headers, options)
-    # |> IO.inspect()
     |> process_response()
   end
 
@@ -29,7 +28,7 @@ defmodule Http.Client do
   defp process_response(
          {:ok, %HTTPoison.Response{status_code: status_code, body: body, headers: headers}}
        )
-       when status_code in [200, 201, 204],
+       when status_code in [200, 201, 202, 204],
        do: {:ok, parse_body(get_content_type(headers), body)}
 
   defp process_response(

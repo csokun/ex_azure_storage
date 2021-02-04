@@ -8,11 +8,11 @@ defmodule AzureStorageTest do
 
   @account_name "sample"
   @account_key "ZHVtbXk="
-  @generic_headers [{:"x-ms-version", "2019-07-07"}, {:"Content-Type", "application/xml"}]
+  @generic_headers %{:"x-ms-version" => "2019-07-07", :"Content-Type" => "application/xml"}
 
   describe "create blob service" do
     setup do
-      {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key)
+      {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key, "2019-07-07")
       %{context: context}
     end
 
@@ -41,11 +41,11 @@ defmodule AzureStorageTest do
   end
 
   describe "create table service" do
-    @table_service_default_headers [
-      {:"x-ms-version", "2019-07-07"},
-      {:accept, "application/json;odata=minimalmetadata"},
-      {:dataserviceversion, "3.0;NetFx"}
-    ]
+    @table_service_default_headers %{
+      accept: "application/json;odata=minimalmetadata",
+      dataserviceversion: "3.0;NetFx",
+      "x-ms-version": "2019-07-07"
+    }
 
     setup do
       {:ok, context} = AzureStorage.create_table_service(@account_name, @account_key)
