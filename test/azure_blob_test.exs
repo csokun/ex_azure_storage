@@ -24,4 +24,17 @@ defmodule AzureStorage.BlobTest do
       end
     end
   end
+
+  describe "get_container_properties" do
+    setup do
+      {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key)
+      %{context: context}
+    end
+
+    test "it should be able to get container properties", %{context: context} do
+      use_cassette "get_container_properties" do
+        assert {:ok, _} = context |> Blob.get_container_properties("bookings")
+      end
+    end
+  end
 end
