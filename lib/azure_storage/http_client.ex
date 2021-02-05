@@ -37,6 +37,16 @@ defmodule Http.Client do
          {:ok, %HTTPoison.Response{status_code: _status, body: body, headers: headers}}
        ) do
     case parse_body(get_content_type(headers), body) do
+      %{
+        "Error" => %{
+          "Code" => reason,
+          "Message" => message,
+          "AuthenticationErrorDetail" => detail
+        }
+      } ->
+        Logger.debug("#{message}\n#{inspect(detail)}")
+        {:error, reason}
+
       %{"Error" => %{"Code" => reason, "Message" => message}} ->
         Logger.debug(message)
         {:error, reason}

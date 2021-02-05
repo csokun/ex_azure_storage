@@ -50,7 +50,7 @@ defmodule AzureStorage.Request.Context do
           %{}
 
         value ->
-          %{:"content-length" => value}
+          %{:"content-length" => "#{value}"}
       end
 
     headers =
