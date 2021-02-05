@@ -100,8 +100,15 @@ defmodule AzureStorage.Blob do
     # x-ms-deny-encryption-scope-override: (true | false)
     query = "#{container}?restype=container"
 
+    headers = %{
+      :"x-ms-blob-public-access" => "blob",
+      :"x-ms-default-encryption-scope" => "$account-encryption-key",
+      :"x-ms-deny-encryption-scope-override" => false,
+      :"Content-Type" => "application/octet-stream"
+    }
+
     context
-    |> build(method: :put, path: query)
+    |> build(method: :put, path: query, headers: headers)
     |> request()
   end
 

@@ -22,6 +22,6 @@ defmodule AzureStorage.Request do
 
   def request(%Context{method: :put, url: url, body: body} = context) do
     headers = context |> SharedKey.sign_request()
-    Client.post(url, body, headers, [])
+    Client.put(url, body, headers, [])
   end
 end

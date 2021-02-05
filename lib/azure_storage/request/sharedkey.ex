@@ -16,13 +16,22 @@ defmodule AzureStorage.Request.SharedKey do
       end
 
     signature = sign(account_key, data)
-    auth_key = {:authorization, "SharedKey #{account_name}:#{signature}"}
+    auth_key = %{:authorization => "SharedKey #{account_name}:#{signature}"}
+
+    headers =
+      headers
+      |> Map.merge(auth_key)
+      |> Map.to_list()
+      |> Enum.filter(fn
+        {_, ""} -> false
+        _ -> true
+      end)
 
     Logger.debug(
       "data: #{inspect(data)}\nsignature: #{inspect(auth_key)}\nheaders: #{inspect(headers)}"
     )
 
-    [auth_key | headers]
+    headers
   end
 
   #
@@ -86,16 +95,10 @@ defmodule AzureStorage.Request.SharedKey do
   defp method_atom_to_string(method), do: method |> Atom.to_string() |> String.upcase()
 
   defp get_content_length(headers) do
-    case headers[:"content-length"] do
-      nil -> ""
-      value -> "#{value}"
-    end
+    Map.get(headers, :"content-length", "")
   end
 
   defp get_content_type(headers) do
-    case headers[:"Content-Type"] do
-      nil -> ""
-      value -> "#{value}"
-    end
+    Map.get(headers, :"Content-Type", "")
   end
 end
