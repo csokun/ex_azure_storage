@@ -1,4 +1,6 @@
 defmodule Http.Client do
+  require Logger
+
   @moduledoc """
   HTTP Client
   """
@@ -32,15 +34,18 @@ defmodule Http.Client do
        do: {:ok, parse_body(get_content_type(headers), body)}
 
   defp process_response(
-         {:ok, %HTTPoison.Response{status_code: status_code, body: body, headers: headers}}
-       ),
-       do: {
-         :error,
-         %{
-           status_code: status_code,
-           body: parse_body(get_content_type(headers), body)
-         }
-       }
+         {:ok, %HTTPoison.Response{status_code: _status, body: body, headers: headers}}
+       ) do
+    case parse_body(get_content_type(headers), body) do
+      %{"Error" => %{"Code" => reason, "Message" => message}} ->
+        Logger.debug(message)
+        {:error, reason}
+
+      response ->
+        response |> IO.inspect()
+        {:error, ""}
+    end
+  end
 
   defp process_response({:error, %HTTPoison.Error{reason: {_, reason}}}),
     do: {:error, reason}
