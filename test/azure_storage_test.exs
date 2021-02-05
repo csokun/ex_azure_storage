@@ -12,7 +12,7 @@ defmodule AzureStorageTest do
 
   describe "create blob service" do
     setup do
-      {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key, "2019-07-07")
+      {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key)
       %{context: context}
     end
 
@@ -36,7 +36,7 @@ defmodule AzureStorageTest do
 
       assert "https://sample.blob.core.windows.net/?comp=list" = url
       assert "?comp=list" = path
-      assert {:"x-ms-date", _} = headers |> Enum.find(fn {:"x-ms-date", _} -> true end)
+      assert headers |> Map.has_key?(:"x-ms-date")
     end
   end
 
