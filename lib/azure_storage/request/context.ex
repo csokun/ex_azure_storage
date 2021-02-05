@@ -69,7 +69,6 @@ defmodule AzureStorage.Request.Context do
 
   def get_canonical_headers(%__MODULE__{headers: headers}) do
     headers
-    |> IO.inspect()
     |> Map.to_list()
     |> Enum.filter(fn {k, _} ->
       case Atom.to_string(k) do
