@@ -15,6 +15,7 @@ defmodule AzureStorage.Table do
     context
     |> build(method: :get, path: query)
     |> request()
+    |> parse_retrieve_entity_response()
   end
 
   @doc """
@@ -60,4 +61,9 @@ defmodule AzureStorage.Table do
     |> build(method: :post, path: query, body: body, headers: headers)
     |> request()
   end
+
+  defp parse_retrieve_entity_response({:error, %{body: %{"odata.error" => %{"code" => code}}}}),
+    do: {:error, code}
+
+  defp parse_retrieve_entity_response({:ok, entity}), do: {:ok, entity}
 end
