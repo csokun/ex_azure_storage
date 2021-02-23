@@ -5,7 +5,7 @@ defmodule AzureStorage.Request.Context do
   defstruct service: "",
             account: %Account{name: nil, key: nil},
             method: "",
-            headers: [],
+            headers: %{},
             base_url: "",
             path: "",
             url: "",
@@ -15,9 +15,13 @@ defmodule AzureStorage.Request.Context do
       when is_binary(service) do
     base_url = "https://#{account.name}.#{service}.core.windows.net"
 
+    headers =
+      default_service_headers(service)
+      |> Map.merge(%{:"x-ms-version" => app_version})
+
     %__MODULE__{
       account: account,
-      headers: [{:"x-ms-version", app_version}] ++ default_service_headers(service),
+      headers: headers,
       service: service,
       base_url: base_url,
       url: base_url,
@@ -43,16 +47,17 @@ defmodule AzureStorage.Request.Context do
     content_length =
       case String.length(body) do
         0 ->
-          []
+          %{}
 
         value ->
-          [{:"content-length", value}]
+          %{:"content-length" => "#{value}"}
       end
 
     headers =
-      [
-        {:"x-ms-date", now} | content_length
-      ] ++ headers_cfg ++ default_headers
+      default_headers
+      |> Map.merge(headers_cfg)
+      |> Map.merge(%{:"x-ms-date" => now})
+      |> Map.merge(content_length)
 
     context
     |> Map.put(:method, method)
@@ -64,7 +69,7 @@ defmodule AzureStorage.Request.Context do
 
   def get_canonical_headers(%__MODULE__{headers: headers}) do
     headers
-    |> Enum.into(%{})
+    |> Map.to_list()
     |> Enum.filter(fn {k, _} ->
       case Atom.to_string(k) do
         "x-ms-" <> _ -> true
@@ -91,16 +96,14 @@ defmodule AzureStorage.Request.Context do
 
   # ----------------- helpers -----------------
   defp default_service_headers("table") do
-    [
-      {:accept, "application/json;odata=minimalmetadata"},
-      {:dataserviceversion, "3.0;NetFx"}
-    ]
+    %{
+      :accept => "application/json;odata=minimalmetadata",
+      :dataserviceversion => "3.0;NetFx"
+    }
   end
 
   defp default_service_headers(_) do
-    [
-      {:"Content-Type", "application/xml"}
-    ]
+    %{:"Content-Type" => "application/xml"}
   end
 
   defp get_table_service_canonical_resource(account_name, path) do

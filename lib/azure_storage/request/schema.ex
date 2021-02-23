@@ -17,7 +17,7 @@ defmodule AzureStorage.Request.Schema do
       headers: [
         type: :any,
         required: false,
-        default: []
+        default: %{}
       ]
     ]
 end

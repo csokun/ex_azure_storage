@@ -22,8 +22,7 @@ defmodule AzureStorage.Blob do
   end
 
   @doc """
-  The Get Container Properties operation returns all user-defined metadata and system properties for the specified container.
-  The data returned does not include the container's list of blobs.
+  The Get Container Properties operation returns all user-defined metadata and system properties for the specified container.  The data returned does not include the container's list of blobs.
   """
   def get_container_properties(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container"
@@ -101,8 +100,15 @@ defmodule AzureStorage.Blob do
     # x-ms-deny-encryption-scope-override: (true | false)
     query = "#{container}?restype=container"
 
+    headers = %{
+      :"x-ms-blob-public-access" => "blob",
+      :"x-ms-default-encryption-scope" => "$account-encryption-key",
+      :"x-ms-deny-encryption-scope-override" => false,
+      :"Content-Type" => "application/octet-stream"
+    }
+
     context
-    |> build(method: :put, path: query)
+    |> build(method: :put, path: query, headers: headers)
     |> request()
   end
 
@@ -126,7 +132,11 @@ defmodule AzureStorage.Blob do
         _options \\ []
       ) do
     query = "#{container}/#{filename}"
-    headers = [{:"x-ms-blob-type", "BlockBlob"}, {:"x-ms-blob-content-encoding", "UTF8"}]
+
+    headers = %{
+      :"x-ms-blob-type" => "BlockBlob",
+      :"x-ms-blob-content-encoding" => "UTF8"
+    }
 
     context
     |> build(method: :put, path: query, body: content, headers: headers)
