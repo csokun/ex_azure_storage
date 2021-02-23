@@ -40,6 +40,7 @@ defmodule ExAzureStorage.MixProject do
     [
       {:elixir_xml_to_map, "~> 1.0"},
       {:jason, "~> 1.2"},
+      {:exvcr, "~> 0.12.2", only: :test},
       {:mox, "~> 1.0.0", only: :test},
       {:httpoison, "~> 1.7.0"},
       {:nimble_options, "~> 0.3.5"},

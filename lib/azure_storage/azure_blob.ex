@@ -11,8 +11,9 @@ defmodule AzureStorage.Blob do
   @doc """
   The List Containers operation returns a list of the containers under the specified storage account.
   """
-  def list_containers(%Context{service: "blob"} = context) do
-    query = "?comp=list"
+  def list_containers(%Context{service: "blob"} = context, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.list_containers_options())
+    query = "?comp=list&maxresults=#{opts[:max_results]}"
 
     context
     |> build(method: :get, path: query)

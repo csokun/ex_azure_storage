@@ -1,12 +1,15 @@
 defmodule AzureStorage.BlobTest do
   use ExUnit.Case, async: true
   alias AzureStorage.Blob
-  import Mox
+  use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
-  setup :verify_on_exit!
+  @account_name Application.get_env(:ex_azure_storage, :account_name, "")
+  @account_key Application.get_env(:ex_azure_storage, :account_key, "")
 
-  @account_name "sample"
-  @account_key "ZHVtbXk="
+  setup do
+    ExVCR.Config.cassette_library_dir("fixture/azure_blob")
+    :ok
+  end
 
   describe "list_containers" do
     setup do
@@ -15,15 +18,23 @@ defmodule AzureStorage.BlobTest do
     end
 
     test "it should be able to list blob containers", %{context: context} do
-      HttpClientMock
-      |> expect(:get, fn "https://#{@account_name}.blob.core.windows.net/?comp=list",
-                         _headers,
-                         _options ->
-        {:error, %HTTPoison.Error{reason: "Not found"}}
-      end)
+      use_cassette "list_containers" do
+        assert {:ok, %{Items: [_, _], NextMarker: "/account-name/bookings"}} =
+                 context |> Blob.list_containers(max_results: 2)
+      end
+    end
+  end
 
-      result = context |> Blob.list_containers()
-      assert {:error, "Not found"} == result
+  describe "get_container_properties" do
+    setup do
+      {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key)
+      %{context: context}
+    end
+
+    test "it should be able to get container properties", %{context: context} do
+      use_cassette "get_container_properties" do
+        assert {:ok, _} = context |> Blob.get_container_properties("bookings")
+      end
     end
   end
 end
