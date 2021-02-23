@@ -51,6 +51,9 @@ defmodule Http.Client do
         Logger.debug(message)
         {:error, reason}
 
+      %{"odata.error" => %{"code" => code}} ->
+        {:error, code}
+
       response ->
         response |> IO.inspect()
         {:error, ""}
