@@ -8,15 +8,11 @@ defmodule AzureStorage.QueueTest do
 
   setup do
     ExVCR.Config.cassette_library_dir("fixture/azure_queue")
-    :ok
+    {:ok, context} = AzureStorage.create_queue_service(@account_name, @account_key)
+    %{context: context}
   end
 
   describe "get_messages" do
-    setup do
-      {:ok, context} = AzureStorage.create_queue_service(@account_name, @account_key)
-      %{context: context}
-    end
-
     test "it should return error QueueNotFound when queue container does not exist", %{
       context: context
     } do
@@ -51,19 +47,14 @@ defmodule AzureStorage.QueueTest do
   end
 
   describe "delete_message" do
-    setup do
-      {:ok, context} = AzureStorage.create_queue_service(@account_name, @account_key)
-      %{context: context}
-    end
-
     test "it should be able to delete message", %{context: context} do
       use_cassette "queue_delete_message" do
+        context |> Queue.create_message("busyq", "testing")
+        {:ok, [message | _]} = context |> Queue.get_messages("busyq")
+
         assert {:ok, ""} =
                  context
-                 |> Queue.delete_message("busyq", %{
-                   "MessageId" => "bb3ab409-25b7-4db3-8b70-18e6a93561d1",
-                   "PopReceipt" => "AgAAAAMAAAAAAAAAkanu8u4T1wE="
-                 })
+                 |> Queue.delete_message("busyq", message)
       end
     end
 
@@ -75,6 +66,18 @@ defmodule AzureStorage.QueueTest do
                    "MessageId" => "bb3ab409-25b7-5db3-8b70-18e6a93561d1",
                    "PopReceipt" => "AgAAAAMAAAAAAAAAkanu8u4T1wE="
                  })
+      end
+    end
+  end
+
+  describe "update_message" do
+    test "it should be able to update message", %{context: context} do
+      use_cassette "queue_update_message_ok" do
+        context |> Queue.create_message("busyq", "testing")
+        {:ok, [message | _]} = context |> Queue.get_messages("busyq")
+        text = "Hello World"
+
+        assert {:ok, ""} = context |> Queue.update_message("busyq", message, text)
       end
     end
   end

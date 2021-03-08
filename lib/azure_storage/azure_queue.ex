@@ -51,7 +51,7 @@ defmodule AzureStorage.Queue do
   The encoded message can be up to 64 KiB in size for versions 2011-08-18 and newer, or 8 KiB in size for previous versions.
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/put-message
   """
-  def create_message(%Context{service: "queue"} = context, queue_name, message, options \\ []) do
+  def create_message(%Context{service: "queue"} = context, queue_name, text, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.create_message_options())
     visibility_timeout = opts[:visibility_timeout]
     message_ttl = opts[:message_ttl]
@@ -60,7 +60,7 @@ defmodule AzureStorage.Queue do
       "#{queue_name}/messages?visibilitytimeout=#{visibility_timeout}&messagettl=#{message_ttl}"
 
     context
-    |> build(method: :post, path: query, body: create_message_body_xml(message))
+    |> build(method: :post, path: query, body: create_message_body_xml(text))
     |> request()
     |> parse_queue_message_response()
   end
@@ -68,20 +68,21 @@ defmodule AzureStorage.Queue do
   def update_message(
         %Context{service: "queue"} = context,
         queue_name,
-        pop_receipt,
-        message,
+        %{"MessageId" => message_id, "PopReceipt" => pop_receipt},
+        text,
         options \\ []
       ) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.create_message_options())
     visibility_timeout = opts[:visibility_timeout]
 
     query =
-      "#{queue_name}/messages?popreceipt=#{pop_receipt}visibilitytimeout=#{visibility_timeout}"
+      "#{queue_name}/messages/#{message_id}?popreceipt=#{pop_receipt}&visibilitytimeout=#{
+        visibility_timeout
+      }"
 
     context
-    |> build(method: :put, path: query, body: create_message_body_xml(message))
+    |> build(method: :put, path: query, body: create_message_body_xml(text))
     |> request()
-    |> parse_queue_message_response()
   end
 
   def delete_message(%Context{service: "queue"} = context, queue_name, %{
