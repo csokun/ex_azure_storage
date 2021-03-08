@@ -41,6 +41,7 @@ defmodule AzureStorage.Queue do
     context
     |> build(method: :delete, path: query)
     |> request()
+    |> IO.inspect()
   end
 
   @doc """

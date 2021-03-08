@@ -1,0 +1,30 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Content-Type": "application/xml",
+        "authorization": "***",
+        "x-ms-date": "Mon, 08 Mar 2021 10:26:43 GMT",
+        "x-ms-version": "2019-07-07"
+      },
+      "method": "delete",
+      "options": [],
+      "request_body": "",
+      "url": "https://account-name.queue.core.windows.net/busyq/messages/bb3ab409-25b7-4db3-8b70-18e6a93561d1?popreceipt=AgAAAAMAAAAAAAAAkanu8u4T1wE="
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "Content-Length": "0",
+        "Server": "Windows-Azure-Queue/1.0 Microsoft-HTTPAPI/2.0",
+        "x-ms-request-id": "9ea89da8-e003-00aa-3b05-14ec3d000000",
+        "x-ms-version": "2019-07-07",
+        "Date": "Mon, 08 Mar 2021 10:26:42 GMT"
+      },
+      "status_code": 204,
+      "type": "ok"
+    }
+  }
+]
