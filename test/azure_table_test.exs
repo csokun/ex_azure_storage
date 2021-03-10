@@ -8,15 +8,11 @@ defmodule AzureStorage.TableTest do
 
   setup do
     ExVCR.Config.cassette_library_dir("fixture/azure_table")
-    :ok
+    {:ok, context} = AzureStorage.create_table_service(@account_name, @account_key)
+    %{context: context}
   end
 
   describe "retrieve_entity" do
-    setup do
-      {:ok, context} = AzureStorage.create_table_service(@account_name, @account_key)
-      %{context: context}
-    end
-
     test "it should return entity when record found", %{context: context} do
       use_cassette "retrieve_entity_when_exists" do
         assert {:ok,

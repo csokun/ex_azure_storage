@@ -8,15 +8,11 @@ defmodule AzureStorage.BlobTest do
 
   setup do
     ExVCR.Config.cassette_library_dir("fixture/azure_blob")
-    :ok
+    {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key)
+    %{context: context}
   end
 
   describe "list_containers" do
-    setup do
-      {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key)
-      %{context: context}
-    end
-
     test "it should be able to list blob containers", %{context: context} do
       use_cassette "list_containers" do
         assert {:ok, %{Items: [_, _], NextMarker: "/account-name/bookings"}} =
@@ -26,11 +22,6 @@ defmodule AzureStorage.BlobTest do
   end
 
   describe "get_container_properties" do
-    setup do
-      {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key)
-      %{context: context}
-    end
-
     test "it should be able to get container properties", %{context: context} do
       use_cassette "get_container_properties" do
         assert {:ok, _} = context |> Blob.get_container_properties("bookings")
