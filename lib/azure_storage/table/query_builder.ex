@@ -36,7 +36,7 @@ defmodule AzureStorage.Table.QueryBuilder do
     filter =
       case filter do
         nil -> ["(#{criteria})"]
-        _ -> ["#{Atom.to_string(connector)} (#{criteria})" | filter]
+        _ -> ["#{Atom.to_string(connector)}%20(#{criteria})" | filter]
       end
 
     %{query | filter: filter}
@@ -45,7 +45,7 @@ defmodule AzureStorage.Table.QueryBuilder do
   defp field(field, comparition, value)
        when comparition in @comparition do
     field_value = field_value(value)
-    "#{field} #{Atom.to_string(comparition)} #{field_value}"
+    "#{field}%20#{Atom.to_string(comparition)}%20#{field_value}"
   end
 
   defp field_value(value) when is_number(value) or is_boolean(value), do: "#{value}"

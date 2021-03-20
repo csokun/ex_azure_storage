@@ -9,14 +9,14 @@ defmodule AzureStorage.Table.QueryBuilderTest do
 
   describe "query builder" do
     test "it should be able to query string field", %{query: query} do
-      assert %{filter: ["(F1 eq 'V1')"]} = query |> where("F1", :eq, "V1")
+      assert %{filter: ["(F1%20eq%20'V1')"]} = query |> where("F1", :eq, "V1")
     end
 
     test "it should be able to query multiple fields", %{query: query} do
       assert %{
                filter: [
-                 "and (F2 eq datetime'2021-03-20 07:26:11.097457Z')",
-                 "(F1 eq 'V1')"
+                 "and%20(F2%20eq%20datetime'2021-03-20 07:26:11.097457Z')",
+                 "(F1%20eq%20'V1')"
                ]
              } =
                query
