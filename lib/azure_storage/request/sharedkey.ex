@@ -16,7 +16,7 @@ defmodule AzureStorage.Request.SharedKey do
       end
 
     signature = sign(account_key, data)
-    auth_key = %{:authorization => "SharedKey #{account_name}:#{signature}"}
+    auth_key = %{"authorization" => "SharedKey #{account_name}:#{signature}"}
 
     headers =
       headers

@@ -30,6 +30,7 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :get, path: query)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -41,6 +42,7 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :get, path: query)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -57,6 +59,7 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :put, body: "", path: query, headers: headers)
     |> request()
+    |> parse_body_response
   end
 
   @doc """

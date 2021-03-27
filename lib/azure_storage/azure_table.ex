@@ -3,9 +3,11 @@ defmodule AzureStorage.Table do
   Azure Table Service
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/table-service-rest-api
   """
-  alias AzureStorage.Table.EntityDescriptor
+  alias AzureStorage.Table.{EntityDescriptor, Query}
   alias AzureStorage.Request.Context
+  import AzureStorage.Table.QueryBuilder
   import AzureStorage.Request
+  import AzureStorage.Parser
 
   def retrieve_entity(%Context{service: "table"} = context, table_name, partition_key, row_key) do
     query =
@@ -15,6 +17,25 @@ defmodule AzureStorage.Table do
     context
     |> build(method: :get, path: query)
     |> request()
+    |> parse_body_response()
+  end
+
+  def query_entities(%Context{service: "table"} = context, %Query{} = query),
+    do: query_entities(context, query, nil)
+
+  def query_entities(%Context{service: "table"} = context, %Query{} = query, continuation_token) do
+    odata_query = query |> compile()
+
+    path =
+      case continuation_token do
+        nil -> odata_query
+        _ -> "#{odata_query}&#{continuation_token}"
+      end
+
+    context
+    |> build(method: :get, path: path)
+    |> request()
+    |> parse_query_entities_response()
   end
 
   @doc """
@@ -59,5 +80,12 @@ defmodule AzureStorage.Table do
     context
     |> build(method: :post, path: query, body: body, headers: headers)
     |> request()
+  end
+
+  defp parse_query_entities_response(
+         {:ok, %{"odata.metadata" => _metadata, "value" => entities}, headers}
+       ) do
+    continuation_token = headers |> parse_continuation_token
+    {:ok, entities, continuation_token}
   end
 end
