@@ -8,22 +8,30 @@ defmodule Http.Client do
 
   @spec get(any, any, any) :: {:error, any} | {:ok, any}
   def get(url, headers, options) do
-    http_adapter().get(url, headers, options)
+    http_options = get_http_request_options(options)
+
+    http_adapter().get(url, headers, http_options)
     |> process_response()
   end
 
   def put(url, body, headers, options) do
-    http_adapter().put(url, body, headers, options)
+    http_options = get_http_request_options(options)
+
+    http_adapter().put(url, body, headers, http_options)
     |> process_response()
   end
 
   def post(url, body, headers, options) do
-    http_adapter().post(url, body, headers, options)
+    http_options = get_http_request_options(options)
+
+    http_adapter().post(url, body, headers, http_options)
     |> process_response()
   end
 
   def delete(url, headers, options) do
-    http_adapter().delete(url, headers, options)
+    http_options = get_http_request_options(options)
+
+    http_adapter().delete(url, headers, http_options)
     |> process_response()
   end
 
@@ -77,5 +85,10 @@ defmodule Http.Client do
       {_, content_type} -> content_type
       _ -> ""
     end
+  end
+
+  defp get_http_request_options(options) do
+    default_options = [ssl: [versions: [:"tlsv1.2"]]]
+    Keyword.merge(default_options, options)
   end
 end
