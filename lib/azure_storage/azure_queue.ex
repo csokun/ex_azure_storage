@@ -41,7 +41,6 @@ defmodule AzureStorage.Queue do
     context
     |> build(method: :delete, path: query)
     |> request()
-    |> IO.inspect()
   end
 
   @doc """
@@ -83,6 +82,7 @@ defmodule AzureStorage.Queue do
     context
     |> build(method: :put, path: query, body: create_message_body_xml(text))
     |> request()
+    |> parse_body_response()
   end
 
   def delete_message(%Context{service: "queue"} = context, queue_name, %{
@@ -94,6 +94,7 @@ defmodule AzureStorage.Queue do
     context
     |> build(method: :delete, path: query)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -120,7 +121,7 @@ defmodule AzureStorage.Queue do
   # Helpers
   #
 
-  defp parse_queue_message_response({:ok, %{"QueueMessagesList" => list}}) do
+  defp parse_queue_message_response({:ok, %{"QueueMessagesList" => list}, _headers}) do
     case list == %{} do
       true ->
         {:ok, nil}
@@ -133,7 +134,7 @@ defmodule AzureStorage.Queue do
 
   defp parse_queue_messages_response({:error, _} = response), do: response
 
-  defp parse_queue_messages_response({:ok, %{"QueueMessagesList" => list}}) do
+  defp parse_queue_messages_response({:ok, %{"QueueMessagesList" => list}, _headers}) do
     case list == %{} do
       true ->
         {:ok, []}

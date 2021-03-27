@@ -30,6 +30,20 @@ defmodule AzureStorage.Table.QueryBuilder do
     add_filter(query, :or, criteria)
   end
 
+  @spec top(Query.t(), integer) :: Query.t()
+  def top(%Query{} = query, count) do
+    %{query | top: count}
+  end
+
+  def compile(%Query{filter: filter, table: table, top: top}) do
+    filter =
+      filter
+      |> Enum.reverse()
+      |> Enum.join("%20")
+
+    "#{table}?$filter=#{filter}&$top=#{top}"
+  end
+
   defp add_filter(%Query{filter: filter} = query, connector, criteria)
        when is_bitstring(criteria) and
               connector in [:and, :or] do

@@ -7,7 +7,7 @@ defmodule AzureStorage.Parser do
            "EnumerationResults" => %{
              "#content" => content
            }
-         }},
+         }, _headers},
         prop
       ) do
     marker = get_in(content, ["NextMarker"])
@@ -21,4 +21,7 @@ defmodule AzureStorage.Parser do
         {:ok, %{Items: shares, NextMarker: marker}}
     end
   end
+
+  def parse_body_response({:ok, body, _}), do: {:ok, body}
+  def parse_body_response({:error, reason}), do: {:error, reason}
 end
