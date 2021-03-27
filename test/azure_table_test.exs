@@ -48,7 +48,30 @@ defmodule AzureStorage.TableTest do
           |> where("PartitionKey", :eq, "partition_key_1")
           |> top(1)
 
-        assert {:ok, [_], _} = context |> Table.query_entities(query)
+        assert {:ok, [_], continuation_token} = context |> Table.query_entities(query)
+
+        assert "NextPartitionKey=1!20!cGFydGl0aW9uX2tleV8x&NextRowKey=1!12!cm93X2tleV8z" =
+                 continuation_token
+      end
+    end
+
+    test "it should be able to query entities with continuation_token", %{context: context} do
+      use_cassette "query_entities_w_continuation_token_results" do
+        query =
+          Query.table("test")
+          |> where("PartitionKey", :eq, "partition_key_1")
+          |> top(1)
+
+        continuation_token =
+          "NextPartitionKey=1!20!cGFydGl0aW9uX2tleV8x&NextRowKey=1!12!cm93X2tleV8z"
+
+        assert {:ok, [_], new_continuation_token} =
+                 context |> Table.query_entities(query, continuation_token)
+
+        assert "NextPartitionKey=1!20!cGFydGl0aW9uX2tleV8x&NextRowKey=1!12!cm93X2tleV80" =
+                 new_continuation_token
+
+        assert continuation_token != new_continuation_token
       end
     end
   end

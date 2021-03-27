@@ -20,11 +20,20 @@ defmodule AzureStorage.Table do
     |> parse_body_response()
   end
 
-  def query_entities(%Context{service: "table"} = context, %Query{} = query) do
+  def query_entities(%Context{service: "table"} = context, %Query{} = query),
+    do: query_entities(context, query, nil)
+
+  def query_entities(%Context{service: "table"} = context, %Query{} = query, continuation_token) do
     odata_query = query |> compile()
 
+    path =
+      case continuation_token do
+        nil -> odata_query
+        _ -> "#{odata_query}&#{continuation_token}"
+      end
+
     context
-    |> build(method: :get, path: odata_query)
+    |> build(method: :get, path: path)
     |> request()
     |> parse_query_entities_response()
   end
@@ -78,9 +87,5 @@ defmodule AzureStorage.Table do
        ) do
     continuation_token = headers |> parse_continuation_token
     {:ok, entities, continuation_token}
-  end
-
-  defp parse_continuation_token(_headers) do
-    nil
   end
 end
