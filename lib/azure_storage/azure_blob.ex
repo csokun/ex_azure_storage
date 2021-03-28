@@ -1,6 +1,6 @@
 defmodule AzureStorage.Blob do
   @moduledoc """
-  Blob Service
+  Azure Blob Service
   """
 
   alias AzureStorage.Request.Context
@@ -127,6 +127,9 @@ defmodule AzureStorage.Blob do
     |> request()
   end
 
+  @doc """
+  Create new blob in a blob container
+  """
   def create_blob(
         %Context{service: "blob"} = context,
         container,
@@ -154,6 +157,9 @@ defmodule AzureStorage.Blob do
     |> request()
   end
 
+  @doc """
+  Delete blob witin blob container
+  """
   def delete_blob(%Context{service: "blob"} = context, container, blob_name) do
     query = "#{container}/#{blob_name}"
 

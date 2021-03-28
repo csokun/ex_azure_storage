@@ -9,6 +9,9 @@ defmodule AzureStorage.Table do
   import AzureStorage.Request
   import AzureStorage.Parser
 
+  @doc """
+  Retrieve an entity by PartitionKey and RowKey
+  """
   def retrieve_entity(%Context{service: "table"} = context, table_name, partition_key, row_key) do
     query =
       "#{table_name}(PartitionKey='#{partition_key}',RowKey='#{row_key}')"
@@ -20,6 +23,9 @@ defmodule AzureStorage.Table do
     |> parse_body_response()
   end
 
+  @doc """
+  Query entities off a table storage
+  """
   def query_entities(%Context{service: "table"} = context, %Query{} = query),
     do: query_entities(context, query, nil)
 
