@@ -64,6 +64,9 @@ defmodule AzureStorage.Queue do
     |> parse_queue_message_response()
   end
 
+  @doc """
+  Update queue item commonly use for updating queue item visibility timeout as well as queue message body
+  """
   def update_message(
         %Context{service: "queue"} = context,
         queue_name,
@@ -85,6 +88,10 @@ defmodule AzureStorage.Queue do
     |> parse_body_response()
   end
 
+  @doc """
+  Azure Queue items can be retrieve by calling `get_messages/3`. However, queue items are not remove from storage.
+  Client need to send request to delete queue item when it is done processing.
+  """
   def delete_message(%Context{service: "queue"} = context, queue_name, %{
         "MessageId" => message_id,
         "PopReceipt" => pop_receipt

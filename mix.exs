@@ -15,7 +15,8 @@ defmodule ExAzureStorage.MixProject do
 
       # Hex
       package: package(),
-      description: "Elixir Azure Storage REST Client",
+      description:
+        "Elixir Azure Storage REST Client support Blob, Queue, Fileshare and TableStorage service",
 
       # Docs
       name: "ExAzureStorage",

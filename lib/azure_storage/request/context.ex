@@ -11,6 +11,17 @@ defmodule AzureStorage.Request.Context do
             url: "",
             body: ""
 
+  @type t :: %AzureStorage.Request.Context{
+          service: String.t(),
+          account: Account.t(),
+          method: String.t(),
+          headers: map(),
+          base_url: String.t(),
+          path: String.t(),
+          url: String.t(),
+          body: String.t()
+        }
+
   def create(%Account{} = account, service, app_version \\ "2019-07-07")
       when is_binary(service) do
     base_url = "https://#{account.name}.#{service}.core.windows.net"
