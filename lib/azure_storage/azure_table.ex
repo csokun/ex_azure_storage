@@ -1,7 +1,13 @@
 defmodule AzureStorage.Table do
   @moduledoc """
   Azure Table Service
+
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/table-service-rest-api
+
+  ```
+  {:ok, context} = AzureStorage.create_table_service("account_name", "account_key")
+  context |> retrieve_entity("partition_key_value", "row_key_value")
+  ```
   """
   alias AzureStorage.Table.{EntityDescriptor, Query}
   alias AzureStorage.Request.Context

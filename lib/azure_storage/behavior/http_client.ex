@@ -1,4 +1,5 @@
 defmodule Http.Client.Behaviour do
+  @moduledoc false
   alias HTTPoison.Response
   alias HTTPoison.AsyncResponse
   alias HTTPoison.Error

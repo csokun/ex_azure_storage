@@ -1,9 +1,7 @@
 defmodule Http.Client do
+  @moduledoc false
   require Logger
 
-  @moduledoc """
-  HTTP Client
-  """
   def http_adapter, do: Application.get_env(:ex_azure_storage, :http_adapter, HTTPoison)
 
   @spec get(any, any, any) :: {:error, any} | {:ok, any, any}

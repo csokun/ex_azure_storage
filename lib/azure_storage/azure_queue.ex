@@ -1,6 +1,13 @@
 defmodule AzureStorage.Queue do
   @moduledoc """
+  Azure Queue Storage
+
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/queue-service-rest-api
+
+  ```
+  {:ok, context} = AzureStorage.create_queue_service("account_name", "account_key")
+  context |> list_queues()
+  ```
   """
   alias AzureStorage.Request.Context
   alias AzureStorage.Queue.Schema

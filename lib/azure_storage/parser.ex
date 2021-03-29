@@ -1,4 +1,5 @@
 defmodule AzureStorage.Parser do
+  @moduledoc false
   def parse_enumeration_results({:error, reason}, _), do: {:error, reason}
 
   def parse_enumeration_results(

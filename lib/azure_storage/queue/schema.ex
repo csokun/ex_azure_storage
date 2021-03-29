@@ -1,4 +1,5 @@
 defmodule AzureStorage.Queue.Schema do
+  @moduledoc false
   @visibility_timeout [
     type: :integer,
     required: false,
