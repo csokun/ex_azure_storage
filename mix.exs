@@ -1,4 +1,4 @@
-defmodule ExAzureStorage.MixProject do
+defmodule AzureStorage.MixProject do
   use Mix.Project
 
   @version "0.1.0"
@@ -19,7 +19,7 @@ defmodule ExAzureStorage.MixProject do
         "Elixir Azure Storage REST Client support Blob, Queue, Fileshare and TableStorage service",
 
       # Docs
-      name: "ExAzureStorage",
+      name: "AzureStorage",
       docs: docs()
     ]
   end
@@ -60,7 +60,7 @@ defmodule ExAzureStorage.MixProject do
 
   defp docs() do
     [
-      main: "ExAzureStorage",
+      main: "AzureStorage",
       source_ref: "v#{@version}",
       source_url: @repo_url
     ]

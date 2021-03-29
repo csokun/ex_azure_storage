@@ -1,6 +1,6 @@
 # AzureStorage  [![Build Status](https://github.com/csokun/ex_azure_storage/workflows/CI/badge.svg?branch=master)](https://github.com/csokun/ex_azure_storage/actions?query=workflow%3ACI)
 
-Elixir Azure Storage Rest API Client.
+Elixir Azure Storage Rest API Client. Support Azure Blob, Queue, Fileshare and Table Storage.
 
 ## Installation
 
