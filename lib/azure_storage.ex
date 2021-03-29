@@ -1,12 +1,20 @@
 defmodule AzureStorage do
   @moduledoc """
-  Azure Storage Rest Client
+  Azure Storage REST Client.
+
+  Before you can start interacting with Azure Storage services. You need to create a `AzureStorage.Request.Context`.
+
+  ## Example
+
+      iex> AzureStorage.create_blob_service("account_name", "account_key")
+      {:ok, %AzureStorage.Request.Context{}}
+
   """
   alias AzureStorage.Core.Account
   alias AzureStorage.Request.Context
 
   @doc """
-  Create a new context to interact with Azure Blob Service
+   Create a new context to interact with Azure Blob Service
   """
   @spec create_blob_service(String.t(), String.t()) :: {:ok, Context.t()} | {:error, String.t()}
   def create_blob_service(account_name, account_key),

@@ -1,6 +1,13 @@
 defmodule AzureStorage.Blob do
   @moduledoc """
   Azure Blob Service
+
+  Create Azure Blob Service Request Context before using any of the following methods.
+
+  ```
+  {:ok, context} = AzureStorage.create_blob_service("account_name", "account_key")
+  context |> list_containers()
+  ```
   """
 
   alias AzureStorage.Request.Context
@@ -11,6 +18,8 @@ defmodule AzureStorage.Blob do
   @doc """
   The List Containers operation returns a list of the containers under the specified storage account.
   """
+  @spec list_containers(Context.t(), keyword()) ::
+          {:ok, %{Items: list() | [], NextMarker: String.t() | nil}} | {:error, String.t()}
   def list_containers(%Context{service: "blob"} = context, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.list_containers_options())
     query = "?comp=list&maxresults=#{opts[:max_results]}"
