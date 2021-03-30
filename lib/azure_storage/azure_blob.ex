@@ -17,6 +17,8 @@ defmodule AzureStorage.Blob do
 
   @doc """
   The List Containers operation returns a list of the containers under the specified storage account.
+
+  Supported options:\n#{NimbleOptions.docs(Schema.list_containers_options())}
   """
   @spec list_containers(Context.t(), keyword()) ::
           {:ok, %{Items: list() | [], NextMarker: String.t() | nil}} | {:error, String.t()}
@@ -73,7 +75,12 @@ defmodule AzureStorage.Blob do
 
   @doc """
   The List Blobs operation returns a list of the blobs under the specified container.
+
+  Supported options:\n#{NimbleOptions.docs(Schema.list_blobs_options())}
   """
+  @spec list_blobs(Context.t(), String.t(), keyword()) ::
+          {:ok, %{Items: list() | [], NextMarker: String.t() | nil}}
+          | {:error, String.t()}
   def list_blobs(%Context{service: "blob"} = context, container, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.list_blobs_options())
     max_results = opts[:max_results]
@@ -103,6 +110,7 @@ defmodule AzureStorage.Blob do
 
   @doc """
   The Create Container operation creates a new container under the specified account.
+
   If the container with the same name already exists, the operation fails.
   """
   def create_container(%Context{service: "blob"} = context, container) do

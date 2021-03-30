@@ -4,13 +4,13 @@ Elixir Azure Storage Rest API Client. Support Azure Blob, Queue, Fileshare and T
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+The package can be installed
 by adding `ex_azure_storage` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:ex_azure_storage, "~> 0.1.0"}
+    {:ex_azure_storage, "~> 0.1.1"}
   ]
 end
 ```
@@ -28,6 +28,4 @@ context
 
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/ex_azure_storage](https://hexdocs.pm/ex_azure_storage).
+Full documentation can be found at [https://hexdocs.pm/ex_azure_storage](https://hexdocs.pm/ex_azure_storage).

@@ -30,11 +30,17 @@ defmodule AzureStorage.Table do
   end
 
   @doc """
-  Query entities off a table storage
+  Query entities from a table storage
   """
+  @spec query_entities(Context.t(), Query.t()) :: {:ok, list(), String.t()} | {:error, String.t()}
   def query_entities(%Context{service: "table"} = context, %Query{} = query),
     do: query_entities(context, query, nil)
 
+  @doc """
+  Query entities from a table storage with `continuation_token`.
+  """
+  @spec query_entities(Context.t(), Query.t(), String.t() | nil) ::
+          {:ok, list(), String.t()} | {:error, String.t()}
   def query_entities(%Context{service: "table"} = context, %Query{} = query, continuation_token) do
     odata_query = query |> compile()
 
