@@ -17,6 +17,8 @@ defmodule AzureStorage.Queue do
   @doc """
   This operation lists all of the queues in a given storage account.
   """
+  @spec list_queues(Context.t()) ::
+          {:ok, %{Items: list() | [], NextMarker: String.t() | nil}} | {:error, String.t()}
   def list_queues(%Context{service: "queue"} = context) do
     query = "?comp=list"
 
@@ -28,7 +30,12 @@ defmodule AzureStorage.Queue do
 
   @doc """
   The Create Queue operation creates a queue in a storage account.
+
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/create-queue4
+
+  ```
+  context |> create_queue("booking-queue")
+  ```
   """
   def create_queue(%Context{service: "queue"} = context, name) do
     query = name
@@ -40,7 +47,12 @@ defmodule AzureStorage.Queue do
 
   @doc """
   The Delete Queue operation permanently deletes the specified queue.
+
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/delete-queue3
+
+  ```
+  context |> delete_queue("booking-queue")
+  ```
   """
   def delete_queue(%Context{service: "queue"} = context, name) do
     query = name
@@ -52,10 +64,16 @@ defmodule AzureStorage.Queue do
 
   @doc """
   The Put Message operation adds a new message to the back of the message queue.
+
   A visibility timeout can also be specified to make the message invisible until the visibility timeout expires.
   A message must be in a format that can be included in an XML request with UTF-8 encoding.
   The encoded message can be up to 64 KiB in size for versions 2011-08-18 and newer, or 8 KiB in size for previous versions.
+
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/put-message
+
+  ```
+  context |> create_message("booking-queue", "hello world")
+  ```
   """
   def create_message(%Context{service: "queue"} = context, queue_name, text, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.create_message_options())
@@ -73,6 +91,15 @@ defmodule AzureStorage.Queue do
 
   @doc """
   Update queue item commonly use for updating queue item visibility timeout as well as queue message body
+
+  ```
+  {:ok, messages} = context |> get_messages("booking-queue")
+  [head | tail] = messages
+
+  context |> update_message("booking-queue", head, "hello world!")
+  ```
+
+  Supported options: \n#{NimbleOptions.docs(Schema.create_message_options())}
   """
   def update_message(
         %Context{service: "queue"} = context,
@@ -96,8 +123,9 @@ defmodule AzureStorage.Queue do
   end
 
   @doc """
-  Azure Queue items can be retrieve by calling `get_messages/3`. However, queue items are not remove from storage.
-  Client need to send request to delete queue item when it is done processing.
+  Azure Queue items can be retrieve by calling `get_messages/3`.
+
+  However, queue items are not remove from storage. Therefore, client need to send request to delete queue item when it is done processing.
   """
   def delete_message(%Context{service: "queue"} = context, queue_name, %{
         "MessageId" => message_id,
@@ -113,8 +141,13 @@ defmodule AzureStorage.Queue do
 
   @doc """
   The Get Messages operation retrieves one or more messages from the front of the queue.
+
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/get-messages
+
+  Supported options: \n#{NimbleOptions.docs(Schema.get_messages_options())}
   """
+  @spec get_messages(Context.t(), String.t(), keyword()) ::
+          {:ok, list() | []} | {:error, String.t()}
   def get_messages(%Context{service: "queue"} = context, queue_name, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.get_messages_options())
     number_of_messages = opts[:number_of_messages]
