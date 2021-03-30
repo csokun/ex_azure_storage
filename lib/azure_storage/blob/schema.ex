@@ -1,4 +1,5 @@
 defmodule AzureStorage.Blob.Schema do
+  @moduledoc false
   @list_operation [
     max_results: [
       type: :pos_integer,

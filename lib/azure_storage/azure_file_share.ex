@@ -3,6 +3,12 @@ defmodule AzureStorage.FileShare do
   Azure File Service
 
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/file-service-rest-api
+
+  ```
+  {:ok, context} = AzureStorage.create_fileshare_service("account_name", "account_key")
+  context |> list_shares()
+  ```
+
   """
 
   alias AzureStorage.Request.Context

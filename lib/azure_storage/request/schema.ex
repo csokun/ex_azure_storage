@@ -1,4 +1,5 @@
 defmodule AzureStorage.Request.Schema do
+  @moduledoc false
   def build_options,
     do: [
       method: [

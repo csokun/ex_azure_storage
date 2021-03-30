@@ -1,4 +1,7 @@
 defmodule AzureStorage.Table.QueryBuilder do
+  @moduledoc """
+  Azure Table Storage Query Builder
+  """
   alias AzureStorage.Table.Query
 
   @comparition [
@@ -10,31 +13,46 @@ defmodule AzureStorage.Table.QueryBuilder do
     :le
   ]
 
+  @spec where(Query.t(), String.t()) :: Query.t()
   def where(%Query{} = query, criteria) when is_bitstring(criteria) do
     add_filter(query, :and, criteria)
   end
 
+  @spec where(Query.t(), String.t(), atom(), any()) :: Query.t()
   def where(%Query{} = query, field, comparition, value)
       when comparition in @comparition do
     criteria = field(field, comparition, value)
     add_filter(query, :and, criteria)
   end
 
+  @doc """
+  Build or expression
+  """
+  @spec or_where(Query.t(), String.t()) :: Query.t()
   def or_where(%Query{} = query, criteria) when is_bitstring(criteria) do
     add_filter(query, :or, criteria)
   end
 
+  @doc """
+  Build or expression
+  """
   def or_where(%Query{} = query, field, comparition, value)
       when comparition in @comparition do
     criteria = field(field, comparition, value)
     add_filter(query, :or, criteria)
   end
 
+  @doc """
+  Select top entities
+  """
   @spec top(Query.t(), integer) :: Query.t()
   def top(%Query{} = query, count) do
     %{query | top: count}
   end
 
+  @doc """
+  Generate query path from `AzureStorage.Table.Query`
+  """
   def compile(%Query{filter: filter, table: table, top: top}) do
     filter =
       filter
@@ -55,6 +73,8 @@ defmodule AzureStorage.Table.QueryBuilder do
 
     %{query | filter: filter}
   end
+
+  # ----------------------
 
   defp field(field, comparition, value)
        when comparition in @comparition do

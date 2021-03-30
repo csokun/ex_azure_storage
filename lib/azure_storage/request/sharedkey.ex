@@ -1,4 +1,5 @@
 defmodule AzureStorage.Request.SharedKey do
+  @moduledoc false
   require Logger
   alias AzureStorage.Request.Context
 

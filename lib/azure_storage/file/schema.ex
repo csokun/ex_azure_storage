@@ -1,4 +1,5 @@
 defmodule AzureStorage.File.Schema do
+  @moduledoc false
   def list_directories_and_files_options,
     do: [
       prefix: [
