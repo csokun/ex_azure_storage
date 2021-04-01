@@ -14,6 +14,11 @@ defmodule AzureStorage.Table.QueryBuilderTest do
       assert %{filter: ["(F1%20eq%20'V1')"]} = query |> where("F1", :eq, "V1")
     end
 
+    test "it should be able to query guid field", %{query: query} do
+      assert %{filter: ["(F1%20eq%20guid'123e4567-e89b-12d3-a456-9AC7CBDCEE52')"]} =
+               query |> where("F1", :eq, "123e4567-e89b-12d3-a456-9AC7CBDCEE52")
+    end
+
     test "it should be able to query multiple fields", %{query: query} do
       assert %{
                filter: [

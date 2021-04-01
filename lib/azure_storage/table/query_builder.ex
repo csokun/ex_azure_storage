@@ -85,14 +85,18 @@ defmodule AzureStorage.Table.QueryBuilder do
   defp field_value(value) when is_number(value) or is_boolean(value), do: "#{value}"
 
   defp field_value(value) do
-    if is_date?(value) do
-      "datetime'#{value}'"
-    else
-      "'#{value |> escape}'"
+    cond do
+      is_date?(value) -> "datetime'#{value}'"
+      is_guid?(value) -> "guid'#{value}'"
+      true -> "'#{value |> escape}'"
     end
   end
 
-  def is_date?(date) do
+  defp is_guid?(value) do
+    String.match?(value, ~r/^[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$/)
+  end
+
+  defp is_date?(date) do
     case date do
       %NaiveDateTime{} -> true
       %DateTime{} -> true
