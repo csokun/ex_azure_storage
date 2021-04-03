@@ -175,4 +175,28 @@ defmodule AzureStorage.TableTest do
       end
     end
   end
+
+  describe "delete_entity" do
+    test "it should be able to delete an entity", %{context: context} do
+      use_cassette "delete_entity" do
+        # arrange
+        ed =
+          %EntityDescriptor{}
+          |> partition_key("partition_key_1000")
+          |> row_key("row_key_500000")
+          |> string("Name", "Linux")
+
+        {:ok, etag} = context |> Table.insert_entity("test", ed)
+
+        assert {:ok, ""} =
+                 context
+                 |> Table.delete_entity(
+                   "test",
+                   "partition_key_1000",
+                   "row_key_500000",
+                   Map.get(etag, "ETag")
+                 )
+      end
+    end
+  end
 end

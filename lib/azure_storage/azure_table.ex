@@ -68,15 +68,17 @@ defmodule AzureStorage.Table do
       ) do
     query =
       "#{table_name}(PartitionKey='#{partition_key}',RowKey='#{row_key}')"
+      |> URI.encode()
       |> String.replace("'", "%27")
 
-    headers = [
-      {:"if-match", etag}
-    ]
+    headers = %{
+      "If-Match" => etag
+    }
 
     context
     |> build(method: :delete, path: query, headers: headers)
     |> request()
+    |> parse_body_response
   end
 
   @doc """
@@ -106,13 +108,8 @@ defmodule AzureStorage.Table do
     query = "#{table_name}"
     body = entity_descriptor |> Jason.encode!()
 
-    headers = %{
-      "Prefer" => "return-no-content",
-      :"Content-Type" => "application/json"
-    }
-
     context
-    |> build(method: :post, path: query, body: body, headers: headers)
+    |> build(method: :post, path: query, body: body, headers: get_standard_headers())
     |> request()
     |> parse_entity_change_response()
   end
@@ -125,40 +122,61 @@ defmodule AzureStorage.Table do
   def update_entity(
         %Context{service: "table"} = context,
         table_name,
-        %EntityDescriptor{ETag: etag} = entity_descriptor
+        %EntityDescriptor{} = entity_descriptor
       ) do
-    keys = entity_descriptor |> get_entity_keys()
-    query = "#{table_name}(#{keys})"
-    body = entity_descriptor |> Jason.encode!()
-
-    # conditional update
-    if_match =
-      case etag do
-        nil -> "*"
-        _ -> etag
-      end
-
-    headers = %{
-      "Prefer" => "return-no-content",
-      :"Content-Type" => "application/json",
-      "If-Match" => if_match
-    }
+    headers = get_patch_headers(entity_descriptor)
 
     context
-    |> build(method: :put, path: query, body: body, headers: headers)
-    |> request()
-    |> parse_entity_change_response()
+    |> patch_entity(:put, table_name, entity_descriptor, headers)
   end
 
   def merge_entity(
         %Context{service: "table"} = context,
         table_name,
-        %EntityDescriptor{ETag: etag} = entity_descriptor
+        %EntityDescriptor{} = entity_descriptor
       ) do
-    keys = entity_descriptor |> get_entity_keys()
-    query = "#{table_name}(#{keys})"
-    body = entity_descriptor |> Jason.encode!()
+    headers = get_patch_headers(entity_descriptor)
 
+    context
+    |> patch_entity(:merge, table_name, entity_descriptor, headers)
+  end
+
+  @doc """
+  The Insert Or Replace Entity operation replaces an existing entity or inserts a new entity if it does not exist in the table. 
+
+  Because this operation can insert or update an entity, it is also known as an upsert operation.
+  """
+  def insert_or_replace_entity(
+        %Context{service: "table"} = context,
+        table_name,
+        %EntityDescriptor{} = entity_descriptor
+      ) do
+    context
+    |> patch_entity(:put, table_name, entity_descriptor, get_standard_headers())
+  end
+
+  @doc """
+  The Insert Or Merge Entity operation updates an existing entity or inserts a new entity if it does not exist in the table.
+
+  Because this operation can insert or update an entity, it is also known as an upsert operation.
+  """
+  def insert_or_merge_entity(
+        %Context{service: "table"} = context,
+        table_name,
+        %EntityDescriptor{} = entity_descriptor
+      ) do
+    context
+    |> patch_entity(:merge, table_name, entity_descriptor, get_standard_headers())
+  end
+
+  # ------------ helpers
+  defp get_standard_headers(),
+    do: %{
+      "Prefer" => "return-no-content",
+      :"Content-Type" => "application/json"
+    }
+
+  defp get_patch_headers(%EntityDescriptor{ETag: etag}) do
     # conditional update
     if_match =
       case etag do
@@ -166,19 +184,30 @@ defmodule AzureStorage.Table do
         _ -> etag
       end
 
-    headers = %{
+    %{
       "Prefer" => "return-no-content",
       :"Content-Type" => "application/json",
       "If-Match" => if_match
     }
+  end
+
+  defp patch_entity(
+         %Context{service: "table"} = context,
+         method,
+         table_name,
+         %EntityDescriptor{} = entity_descriptor,
+         headers
+       )
+       when method in [:put, :merge] do
+    keys = entity_descriptor |> get_entity_keys()
+    query = "#{table_name}(#{keys})"
+    body = entity_descriptor |> Jason.encode!()
 
     context
-    |> build(method: :merge, path: query, body: body, headers: headers)
+    |> build(method: method, path: query, body: body, headers: headers)
     |> request()
     |> parse_entity_change_response()
   end
-
-  # ------------ helpers
 
   defp parse_query_entities_response(
          {:ok, %{"odata.metadata" => _metadata, "value" => entities}, headers}
