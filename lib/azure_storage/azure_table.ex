@@ -59,6 +59,8 @@ defmodule AzureStorage.Table do
   @doc """
   Deletes an existing entity in a table.
   """
+  @spec delete_entity(Context.t(), String.t(), String.t(), String.t(), binary()) ::
+          {:ok, String.t()} | {:error, String.t()}
   def delete_entity(
         %Context{service: "table"} = context,
         table_name,
@@ -96,10 +98,11 @@ defmodule AzureStorage.Table do
     |> string("Message", "Hello World")
 
   context |> AzureStorage.Table.insert_entity("table1", entity)
+  # {:ok, %{"ETag" => ...}}
   ```
   """
   @spec insert_entity(Context.t(), String.t(), EntityDescriptor.t()) ::
-          {:ok, EntityDescriptor.t()} | {:error, String.t()}
+          {:ok, map()} | {:error, String.t()}
   def insert_entity(
         %Context{service: "table"} = context,
         table_name,
@@ -130,6 +133,11 @@ defmodule AzureStorage.Table do
     |> patch_entity(:put, table_name, entity_descriptor, headers)
   end
 
+  @doc """
+  The Merge Entity operation updates an existing entity by updating the entity's properties.
+
+  This operation does not replace the existing entity, as the Update Entity operation does.
+  """
   def merge_entity(
         %Context{service: "table"} = context,
         table_name,
