@@ -83,6 +83,18 @@ defmodule AzureStorage.Table do
   The Insert Entity operation inserts a new entity into a table.
 
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/insert-entity
+
+  ```
+  alias AzureStorage.Table.EntityDescriptor
+  import AzureStorage.Table.EntityGenerator
+
+  entity = %EntityDescriptor{}
+    |> partition_key("partition_key_1")
+    |> row_key("row_key_1")
+    |> string("Message", "Hello World")
+
+  context |> AzureStorage.Table.insert_entity("table1", entity)
+  ```
   """
   @spec insert_entity(Context.t(), String.t(), EntityDescriptor.t()) ::
           {:ok, EntityDescriptor.t()} | {:error, String.t()}
