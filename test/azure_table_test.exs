@@ -126,12 +126,76 @@ defmodule AzureStorage.TableTest do
           |> string("Name", "Linux")
           |> int32("Encoded", 42)
 
-        {:ok, etag} = context |> Table.insert_entity("test", ed)
+        {:ok, _} = context |> Table.insert_entity("test", ed)
 
         ed2 = %{ed | ETag: "W/\"datetime'2021-04-03T04%3A24%3A09.6050786Z'\""}
 
         assert {:error, "UpdateConditionNotSatisfied"} =
-                 context |> Table.update_entity("test", ed2) |> IO.inspect()
+                 context |> Table.update_entity("test", ed2)
+      end
+    end
+  end
+
+  describe "merge_entity" do
+    test "it should be able to merge entity properties", %{context: context} do
+      use_cassette "merge_entity" do
+        # arrange
+        ed =
+          %EntityDescriptor{}
+          |> partition_key("partition_key_1000")
+          |> row_key("row_key_400000")
+          |> string("Name", "Linux")
+          |> int32("Encoded", 42)
+
+        {:ok, etag} = context |> Table.insert_entity("test", ed)
+
+        ed2 =
+          %EntityDescriptor{}
+          |> partition_key("partition_key_1000")
+          |> row_key("row_key_400000")
+          |> string("FirstName", "Sokun")
+
+        ed2 = %{ed2 | ETag: Map.get(etag, "ETag")}
+        assert {:ok, _} = context |> Table.merge_entity("test", ed2)
+
+        assert {:ok,
+                %{
+                  "Encoded" => 42,
+                  "FirstName" => "Sokun",
+                  "Name" => "Linux",
+                  "PartitionKey" => "partition_key_1000",
+                  "RowKey" => "row_key_400000",
+                  "Timestamp" => _,
+                  "odata.etag" => _,
+                  "odata.metadata" =>
+                    "https://account-name.table.core.windows.net/$metadata#test/@Element"
+                }} =
+                 context
+                 |> Table.retrieve_entity("test", "partition_key_1000", "row_key_400000")
+      end
+    end
+  end
+
+  describe "delete_entity" do
+    test "it should be able to delete an entity", %{context: context} do
+      use_cassette "delete_entity" do
+        # arrange
+        ed =
+          %EntityDescriptor{}
+          |> partition_key("partition_key_1000")
+          |> row_key("row_key_500000")
+          |> string("Name", "Linux")
+
+        {:ok, etag} = context |> Table.insert_entity("test", ed)
+
+        assert {:ok, ""} =
+                 context
+                 |> Table.delete_entity(
+                   "test",
+                   "partition_key_1000",
+                   "row_key_500000",
+                   Map.get(etag, "ETag")
+                 )
       end
     end
   end

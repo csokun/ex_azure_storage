@@ -24,4 +24,9 @@ defmodule AzureStorage.Request do
     headers = context |> SharedKey.sign_request()
     Client.put(url, body, headers, [])
   end
+
+  def request(%Context{method: :merge, url: url, body: body} = context) do
+    headers = context |> SharedKey.sign_request()
+    Client.merge(url, body, headers, [])
+  end
 end
