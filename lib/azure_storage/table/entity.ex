@@ -1,6 +1,11 @@
 defmodule AzureStorage.Table.Entity do
   defstruct _: nil, "$": ""
 
+  @type t :: %AzureStorage.Table.Entity{
+          _: String.t(),
+          "$": any()
+        }
+
   def new(value, type), do: %__MODULE__{_: value, "$": type}
 
   # validation methods

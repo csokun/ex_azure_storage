@@ -9,7 +9,7 @@ defmodule AzureStorage.Table do
   context |> retrieve_entity("partition_key_value", "row_key_value")
   ```
   """
-  alias AzureStorage.Table.{EntityDescriptor, Query}
+  alias AzureStorage.Table.{EntityDescriptor, Query, Entity}
   alias AzureStorage.Request.Context
   import AzureStorage.Table.QueryBuilder
   import AzureStorage.Request
@@ -80,8 +80,12 @@ defmodule AzureStorage.Table do
   end
 
   @doc """
+  The Insert Entity operation inserts a new entity into a table.
+
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/insert-entity
   """
+  @spec insert_entity(Context.t(), String.t(), EntityDescriptor.t()) ::
+          {:ok, EntityDescriptor.t()} | {:error, String.t()}
   def insert_entity(
         %Context{service: "table"} = context,
         table_name,
@@ -90,20 +94,78 @@ defmodule AzureStorage.Table do
     query = "#{table_name}"
     body = entity_descriptor |> Jason.encode!()
 
-    headers = [
-      {:Prefer, "return-no-content"},
-      {:"Content-Type", "application/json"}
-    ]
+    headers = %{
+      "Prefer" => "return-no-content",
+      :"Content-Type" => "application/json"
+    }
 
     context
     |> build(method: :post, path: query, body: body, headers: headers)
     |> request()
+    |> parse_entity_change_response()
   end
+
+  @doc """
+  The Update Entity operation updates an existing entity in a table.
+
+  The Update Entity operation replaces the entire entity and can be used to remove properties.
+  """
+  def update_entity(
+        %Context{service: "table"} = context,
+        table_name,
+        %EntityDescriptor{ETag: etag} = entity_descriptor
+      ) do
+    keys = entity_descriptor |> get_entity_keys()
+    query = "#{table_name}(#{keys})"
+    body = entity_descriptor |> Jason.encode!()
+
+    # conditional update
+    if_match =
+      case etag do
+        nil -> "*"
+        _ -> etag
+      end
+
+    headers = %{
+      "Prefer" => "return-no-content",
+      :"Content-Type" => "application/json",
+      "If-Match" => if_match
+    }
+
+    context
+    |> build(method: :put, path: query, body: body, headers: headers)
+    |> request()
+    |> parse_entity_change_response()
+  end
+
+  # ------------ helpers
 
   defp parse_query_entities_response(
          {:ok, %{"odata.metadata" => _metadata, "value" => entities}, headers}
        ) do
     continuation_token = headers |> parse_continuation_token
     {:ok, entities, continuation_token}
+  end
+
+  defp parse_entity_change_response({:ok, _, headers}) do
+    headers
+    |> Enum.find(fn
+      {"ETag", _} -> true
+      _ -> false
+    end)
+    |> case do
+      nil -> {:ok, nil}
+      {"ETag", etag} -> {:ok, %{"ETag" => etag}}
+    end
+  end
+
+  defp parse_entity_change_response({:error, reason}), do: {:error, reason}
+
+  defp get_entity_keys(%EntityDescriptor{} = entity_descriptor) do
+    entity_descriptor
+    |> Map.take([:PartitionKey, :RowKey])
+    |> Map.to_list()
+    |> Enum.map(fn {key, %Entity{_: value}} -> "#{key}=%27#{value}%27" end)
+    |> Enum.join(",")
   end
 end
