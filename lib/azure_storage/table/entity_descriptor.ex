@@ -6,6 +6,13 @@ defmodule AzureStorage.Table.EntityDescriptor do
             Fields: %{},
             ETag: nil
 
+  @type t :: %AzureStorage.Table.EntityDescriptor{
+          PartitionKey: Entity.t(),
+          RowKey: Entity.t(),
+          Fields: map(),
+          ETag: String.t() | nil
+        }
+
   def update_field(%__MODULE__{} = entity_descriptor, field_name, %Entity{} = value) do
     fields =
       entity_descriptor
