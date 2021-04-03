@@ -4,6 +4,7 @@ defmodule Http.Client.Behaviour do
   alias HTTPoison.AsyncResponse
   alias HTTPoison.Error
 
+  @typep method :: :get | :post | :put | :patch | :delete | :options | :head | :merge
   @typep url :: binary()
   @typep body :: {:form, [{atom(), any()}]}
   @typep headers :: [{atom, binary}] | [{binary, binary}] | %{binary => binary}
@@ -19,5 +20,8 @@ defmodule Http.Client.Behaviour do
               {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
 
   @callback delete(url, headers, options) ::
+              {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
+
+  @callback request(method, url, body, headers, options) ::
               {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
 end

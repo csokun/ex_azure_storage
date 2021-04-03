@@ -3,7 +3,7 @@ defmodule AzureStorage.Request.Schema do
   def build_options,
     do: [
       method: [
-        type: {:in, [:post, :get, :put, :delete]},
+        type: {:in, [:post, :get, :put, :delete, :merge]},
         required: true
       ],
       path: [

@@ -150,6 +150,34 @@ defmodule AzureStorage.Table do
     |> parse_entity_change_response()
   end
 
+  def merge_entity(
+        %Context{service: "table"} = context,
+        table_name,
+        %EntityDescriptor{ETag: etag} = entity_descriptor
+      ) do
+    keys = entity_descriptor |> get_entity_keys()
+    query = "#{table_name}(#{keys})"
+    body = entity_descriptor |> Jason.encode!()
+
+    # conditional update
+    if_match =
+      case etag do
+        nil -> "*"
+        _ -> etag
+      end
+
+    headers = %{
+      "Prefer" => "return-no-content",
+      :"Content-Type" => "application/json",
+      "If-Match" => if_match
+    }
+
+    context
+    |> build(method: :merge, path: query, body: body, headers: headers)
+    |> request()
+    |> parse_entity_change_response()
+  end
+
   # ------------ helpers
 
   defp parse_query_entities_response(

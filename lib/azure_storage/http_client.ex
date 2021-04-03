@@ -33,6 +33,13 @@ defmodule Http.Client do
     |> process_response()
   end
 
+  def merge(url, body, headers, options) do
+    http_options = get_http_request_options(options)
+
+    http_adapter().request(:merge, url, body, headers, http_options)
+    |> process_response()
+  end
+
   defp process_response(
          {:ok, %HTTPoison.Response{status_code: status_code, body: body, headers: headers}}
        )

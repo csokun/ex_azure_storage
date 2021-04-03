@@ -14,7 +14,7 @@ defmodule AzureStorage.Request.Context do
   @type t :: %AzureStorage.Request.Context{
           service: String.t(),
           account: Account.t(),
-          method: String.t(),
+          method: String.t() | atom(),
           headers: map(),
           base_url: String.t(),
           path: String.t(),
