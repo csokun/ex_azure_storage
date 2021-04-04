@@ -1,0 +1,44 @@
+[
+  {
+    "request": {
+      "body": "{\"checkIn\": \"2021-01-01\"}",
+      "headers": {
+        "Content-Type": "application/json",
+        "content-length": "25",
+        "x-ms-date": "Sun, 04 Apr 2021 11:30:31 GMT",
+        "x-ms-version": "2019-07-07",
+        "authorization": "***",
+        "x-ms-blob-content-encoding": "UTF8",
+        "x-ms-blob-type": "BlockBlob"
+      },
+      "method": "put",
+      "options": {
+        "ssl_options": {
+          "versions": [
+            "tlsv1.2"
+          ]
+        }
+      },
+      "request_body": "",
+      "url": "https://account-name.blob.core.windows.net/bookings/hotel-room-a.json"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "Content-Length": "0",
+        "Content-MD5": "VUPceKJyyDy9d2LQBFqjgQ==",
+        "Last-Modified": "Sun, 04 Apr 2021 11:30:31 GMT",
+        "ETag": "\"0x8D8F75D0E463685\"",
+        "Server": "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0",
+        "x-ms-request-id": "f267c6a4-e01e-00aa-3545-29ec3d000000",
+        "x-ms-version": "2019-07-07",
+        "x-ms-content-crc64": "huEwx12Z9bk=",
+        "x-ms-request-server-encrypted": "true",
+        "Date": "Sun, 04 Apr 2021 11:30:31 GMT"
+      },
+      "status_code": 201,
+      "type": "ok"
+    }
+  }
+]

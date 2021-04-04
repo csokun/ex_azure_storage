@@ -1,0 +1,41 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Content-Type": "application/xml",
+        "x-ms-date": "Sun, 04 Apr 2021 11:26:24 GMT",
+        "x-ms-version": "2019-07-07",
+        "authorization": "***",
+        "x-ms-lease-action": "acquire",
+        "x-ms-lease-duration": "15"
+      },
+      "method": "put",
+      "options": {
+        "ssl_options": {
+          "versions": [
+            "tlsv1.2"
+          ]
+        }
+      },
+      "request_body": "",
+      "url": "https://account-name.blob.core.windows.net/bookings/hotel-room-a.json?comp=lease"
+    },
+    "response": {
+      "binary": false,
+      "body": "",
+      "headers": {
+        "Content-Length": "0",
+        "Last-Modified": "Sun, 04 Apr 2021 11:24:45 GMT",
+        "ETag": "\"0x8D8F75C4007EF21\"",
+        "Server": "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0",
+        "x-ms-request-id": "9d53c144-e01e-0061-6945-29ef68000000",
+        "x-ms-version": "2019-07-07",
+        "x-ms-lease-id": "bf1c63c8-6e33-4444-b55c-773be91b8467",
+        "Date": "Sun, 04 Apr 2021 11:26:24 GMT"
+      },
+      "status_code": 201,
+      "type": "ok"
+    }
+  }
+]

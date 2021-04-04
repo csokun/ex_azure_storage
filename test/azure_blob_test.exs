@@ -28,4 +28,19 @@ defmodule AzureStorage.BlobTest do
       end
     end
   end
+
+  describe "acquire lease" do
+    test "it should be able to acquire lease for a given blob", %{context: context} do
+      use_cassette "acquire_lease_blob_with_setup" do
+        # arrange
+        # TODO: for some reason ExVCR can't capture second PUT request,
+        # comment arrange step until figure out what wrong
+        # context
+        # |> Blob.create_blob("bookings", "hotel-room-a.json", "{\"checkIn\": \"2021-01-01\"}")
+
+        assert {:ok, lease} = context |> Blob.acquire_lease("bookings", "hotel-room-a.json")
+        assert %{"ETag" => _, "lease_id" => _} = lease
+      end
+    end
+  end
 end

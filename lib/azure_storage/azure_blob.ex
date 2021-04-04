@@ -158,7 +158,8 @@ defmodule AzureStorage.Blob do
 
     headers = %{
       "x-ms-blob-type" => "BlockBlob",
-      "x-ms-blob-content-encoding" => "UTF8"
+      "x-ms-blob-content-encoding" => "UTF8",
+      :"Content-Type" => "application/json"
     }
 
     context
@@ -166,6 +167,29 @@ defmodule AzureStorage.Blob do
     |> request()
   end
 
+  @doc """
+  Acquires a new lease. If container and blob are specified, acquires a blob lease. Otherwise, if only container is specified and blob is null, acquires a container lease.
+
+  Supported options\n#{NimbleOptions.docs(Schema.acquire_lease_options())}
+  """
+  def acquire_lease(%Context{service: "blob"} = context, container, filename, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.acquire_lease_options())
+    query = "#{container}/#{filename}?comp=lease"
+
+    headers = %{
+      "x-ms-lease-action" => "acquire",
+      "x-ms-lease-duration" => opts[:duration]
+    }
+
+    context
+    |> build(method: :put, path: query, headers: headers)
+    |> request()
+    |> parse_lease_response()
+  end
+
+  @doc """
+  The Get Blob operation reads or downloads a blob from the system, including its metadata and properties.
+  """
   def get_blob_content(%Context{service: "blob"} = context, container, blob_name) do
     query = "#{container}/#{blob_name}"
 
@@ -184,4 +208,19 @@ defmodule AzureStorage.Blob do
     |> build(method: :delete, path: query)
     |> request()
   end
+
+  # ------------ helpers
+  defp parse_lease_response({:ok, _, headers}) do
+    props =
+      headers
+      |> Enum.reduce(%{}, fn
+        {"ETag", value}, map -> Map.put(map, "ETag", value)
+        {"x-ms-lease-id", value}, map -> Map.put(map, "lease_id", value)
+        _, map -> map
+      end)
+
+    {:ok, props}
+  end
+
+  defp parse_lease_response({:error, reason}), do: {:error, reason}
 end
