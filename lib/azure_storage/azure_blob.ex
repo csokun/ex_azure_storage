@@ -121,9 +121,9 @@ defmodule AzureStorage.Blob do
     query = "#{container}?restype=container"
 
     headers = %{
-      :"x-ms-blob-public-access" => "blob",
-      :"x-ms-default-encryption-scope" => "$account-encryption-key",
-      :"x-ms-deny-encryption-scope-override" => false,
+      "x-ms-blob-public-access" => "blob",
+      "x-ms-default-encryption-scope" => "$account-encryption-key",
+      "x-ms-deny-encryption-scope-override" => false,
       :"Content-Type" => "application/octet-stream"
     }
 
@@ -157,8 +157,8 @@ defmodule AzureStorage.Blob do
     query = "#{container}/#{filename}"
 
     headers = %{
-      :"x-ms-blob-type" => "BlockBlob",
-      :"x-ms-blob-content-encoding" => "UTF8"
+      "x-ms-blob-type" => "BlockBlob",
+      "x-ms-blob-content-encoding" => "UTF8"
     }
 
     context
