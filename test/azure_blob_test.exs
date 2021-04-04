@@ -31,7 +31,7 @@ defmodule AzureStorage.BlobTest do
 
   describe "acquire lease" do
     test "it should be able to acquire lease for a given blob", %{context: context} do
-      use_cassette "acquire_lease" do
+      use_cassette "acquire_lease_blob" do
         # arrange
         # TODO: for some reason ExVCR can't capture second PUT request,
         # comment arrange step until figure out what wrong
