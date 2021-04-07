@@ -43,4 +43,33 @@ defmodule AzureStorage.BlobTest do
       end
     end
   end
+
+  describe "get_blob_content" do
+    test "it should be able to get text blob content", %{context: context} do
+      use_cassette "get_blob_content_txt" do
+        # arrange
+        content = "hello world"
+
+        context
+        |> Blob.create_blob("bookings", "text1.txt", content)
+
+        assert {:ok, ^content} = context |> Blob.get_blob_content("bookings", "text1.txt")
+      end
+    end
+
+    test "it should be able to get json blob content", %{context: context} do
+      use_cassette "get_blob_content_json" do
+        # arrange
+        content = "{\"data\": []}"
+
+        context
+        |> Blob.create_blob("bookings", "cache-key-1.json", content,
+          content_type: "application/json;charset=\"utf-8\""
+        )
+
+        assert {:ok, %{"data" => []}} =
+                 context |> Blob.get_blob_content("bookings", "cache-key-1.json")
+      end
+    end
+  end
 end

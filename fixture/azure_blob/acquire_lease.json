@@ -1,0 +1,40 @@
+[
+  {
+    "request": {
+      "body": "",
+      "headers": {
+        "Content-Type": "application/xml",
+        "x-ms-date": "Sun, 04 Apr 2021 11:46:35 GMT",
+        "x-ms-version": "2019-07-07",
+        "authorization": "***",
+        "x-ms-lease-action": "acquire",
+        "x-ms-lease-duration": "15"
+      },
+      "method": "put",
+      "options": {
+        "ssl_options": {
+          "versions": [
+            "tlsv1.2"
+          ]
+        }
+      },
+      "request_body": "",
+      "url": "https://account-name.blob.core.windows.net/bookings/hotel-room-a.json?comp=lease"
+    },
+    "response": {
+      "binary": false,
+      "body": "﻿<?xml version=\"1.0\" encoding=\"utf-8\"?><Error><Code>BlobNotFound</Code><Message>The specified blob does not exist.\nRequestId:45c9ebfa-c01e-002b-4848-294ce7000000\nTime:2021-04-04T11:46:35.4460919Z</Message></Error>",
+      "headers": {
+        "Content-Length": "215",
+        "Content-Type": "application/xml",
+        "Server": "Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0",
+        "x-ms-request-id": "45c9ebfa-c01e-002b-4848-294ce7000000",
+        "x-ms-version": "2019-07-07",
+        "x-ms-error-code": "BlobNotFound",
+        "Date": "Sun, 04 Apr 2021 11:46:34 GMT"
+      },
+      "status_code": 404,
+      "type": "ok"
+    }
+  }
+]

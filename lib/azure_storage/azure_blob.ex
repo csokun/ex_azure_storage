@@ -9,7 +9,6 @@ defmodule AzureStorage.Blob do
   context |> list_containers()
   ```
   """
-
   alias AzureStorage.Request.Context
   alias AzureStorage.Blob.Schema
   import AzureStorage.Request
@@ -134,6 +133,7 @@ defmodule AzureStorage.Blob do
 
   @doc """
   The Delete Container operation marks the specified container for deletion.
+
   The container and any blobs contained within it are later deleted during garbage collection.
   """
   def delete_container(%Context{service: "blob"} = context, container) do
@@ -146,20 +146,28 @@ defmodule AzureStorage.Blob do
 
   @doc """
   Create new blob in a blob container
+
+  Supported options\n#{NimbleOptions.docs(Schema.create_blob_options())}
+
+  ```
+  {:ok, context} = AzureStorage.create_blob_service("account_name", "account_key")
+  context |> create_blob("blobs", "cache-key-1.json", "{\\"data\\": []}", content_type: "application/json;charset=\\"utf-8\\"")
+  ```
   """
   def create_blob(
         %Context{service: "blob"} = context,
         container,
         filename,
         content,
-        _options \\ []
+        options \\ []
       ) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.create_blob_options())
     query = "#{container}/#{filename}"
 
     headers = %{
       "x-ms-blob-type" => "BlockBlob",
       "x-ms-blob-content-encoding" => "UTF8",
-      :"Content-Type" => "application/json"
+      :"Content-Type" => opts[:content_type]
     }
 
     context
@@ -196,6 +204,7 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :get, path: query)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """

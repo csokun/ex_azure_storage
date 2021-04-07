@@ -31,6 +31,7 @@ defmodule AzureStorage.Blob.Schema do
     do: [
       content_type: [
         type: :string,
+        doc: "Content-Type",
         default: "text/plain;charset=\"utf-8\""
       ]
     ]
