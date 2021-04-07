@@ -27,7 +27,7 @@ defmodule AzureStorage.Blob.Schema do
   def list_blobs_options,
     do: @list_operation
 
-  def create_blob_options,
+  def put_blob_options,
     do: [
       content_type: [
         type: :string,

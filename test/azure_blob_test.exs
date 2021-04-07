@@ -36,7 +36,7 @@ defmodule AzureStorage.BlobTest do
         # TODO: for some reason ExVCR can't capture second PUT request,
         # comment arrange step until figure out what wrong
         # context
-        # |> Blob.create_blob("bookings", "hotel-room-a.json", "{\"checkIn\": \"2021-01-01\"}")
+        # |> Blob.put_blob("bookings", "hotel-room-a.json", "{\"checkIn\": \"2021-01-01\"}")
 
         assert {:ok, lease} = context |> Blob.acquire_lease("bookings", "hotel-room-a.json")
         assert %{"ETag" => _, "lease_id" => _} = lease
@@ -51,7 +51,7 @@ defmodule AzureStorage.BlobTest do
         content = "hello world"
 
         context
-        |> Blob.create_blob("bookings", "text1.txt", content)
+        |> Blob.put_blob("bookings", "text1.txt", content)
 
         assert {:ok, ^content} = context |> Blob.get_blob_content("bookings", "text1.txt")
       end
@@ -63,7 +63,7 @@ defmodule AzureStorage.BlobTest do
         content = "{\"data\": []}"
 
         context
-        |> Blob.create_blob("bookings", "cache-key-1.json", content,
+        |> Blob.put_blob("bookings", "cache-key-1.json", content,
           content_type: "application/json;charset=\"utf-8\""
         )
 

@@ -147,21 +147,21 @@ defmodule AzureStorage.Blob do
   @doc """
   Create new blob in a blob container
 
-  Supported options\n#{NimbleOptions.docs(Schema.create_blob_options())}
+  Supported options\n#{NimbleOptions.docs(Schema.put_blob_options())}
 
   ```
   {:ok, context} = AzureStorage.create_blob_service("account_name", "account_key")
-  context |> create_blob("blobs", "cache-key-1.json", "{\\"data\\": []}", content_type: "application/json;charset=\\"utf-8\\"")
+  context |> put_blob("blobs", "cache-key-1.json", "{\\"data\\": []}", content_type: "application/json;charset=\\"utf-8\\"")
   ```
   """
-  def create_blob(
+  def put_blob(
         %Context{service: "blob"} = context,
         container,
         filename,
         content,
         options \\ []
       ) do
-    {:ok, opts} = NimbleOptions.validate(options, Schema.create_blob_options())
+    {:ok, opts} = NimbleOptions.validate(options, Schema.put_blob_options())
     query = "#{container}/#{filename}"
 
     headers = %{
