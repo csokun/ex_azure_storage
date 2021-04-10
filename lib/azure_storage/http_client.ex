@@ -83,7 +83,8 @@ defmodule Http.Client do
 
   defp parse_body("", ""), do: ""
   defp parse_body("application/json" <> _, body), do: Jason.decode!(body)
-  defp parse_body(_, body), do: XmlToMap.naive_map(body)
+  defp parse_body("application/xml", body), do: XmlToMap.naive_map(body)
+  defp parse_body(_, body), do: body
 
   defp get_content_type(headers) do
     case Enum.find(headers, fn {k, _} -> k == "Content-Type" end) do

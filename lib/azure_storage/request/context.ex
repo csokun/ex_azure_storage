@@ -42,13 +42,16 @@ defmodule AzureStorage.Request.Context do
 
   @doc """
   Build request context
+
+  Supported options\n#{NimbleOptions.docs(Schema.build_options())}
   """
+  @spec build(t(), keyword()) :: t()
   def build(
         %__MODULE__{headers: default_headers, base_url: base_url} = context,
-        config \\ []
+        options \\ []
       ) do
     now = get_date()
-    {:ok, options} = NimbleOptions.validate(config, Schema.build_options())
+    {:ok, options} = NimbleOptions.validate(options, Schema.build_options())
     body = options[:body]
     method = options[:method]
     path = options[:path]
@@ -81,8 +84,14 @@ defmodule AzureStorage.Request.Context do
   def get_canonical_headers(%__MODULE__{headers: headers}) do
     headers
     |> Map.to_list()
+    |> Enum.map(fn {k, v} ->
+      case is_atom(k) do
+        true -> {Atom.to_string(k), v}
+        _ -> {k, v}
+      end
+    end)
     |> Enum.filter(fn {k, _} ->
-      case Atom.to_string(k) do
+      case k do
         "x-ms-" <> _ -> true
         _ -> false
       end

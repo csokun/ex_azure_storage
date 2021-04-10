@@ -27,11 +27,36 @@ defmodule AzureStorage.Blob.Schema do
   def list_blobs_options,
     do: @list_operation
 
-  def create_blob_options,
+  def put_blob_options,
     do: [
       content_type: [
         type: :string,
+        doc: "Content-Type",
         default: "text/plain;charset=\"utf-8\""
+      ]
+    ]
+
+  def get_blob_options,
+    do: [
+      lease_id: [
+        type: :string,
+        default: "",
+        doc: "Active lease id"
+      ]
+    ]
+
+  def acquire_lease_options,
+    do: [
+      duration: [
+        type: :integer,
+        default: 15,
+        doc:
+          "Specifies the duration of the lease, in seconds, or negative on(-1) for a lease that never expires. A non-inifinite lease can be between 15 and 60 seconds."
+      ],
+      propose_lease_id: [
+        type: :string,
+        default: "",
+        doc: "Proposed lease ID, in a GUID string format."
       ]
     ]
 end

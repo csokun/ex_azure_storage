@@ -9,7 +9,6 @@ defmodule AzureStorage.Blob do
   context |> list_containers()
   ```
   """
-
   alias AzureStorage.Request.Context
   alias AzureStorage.Blob.Schema
   import AzureStorage.Request
@@ -121,9 +120,9 @@ defmodule AzureStorage.Blob do
     query = "#{container}?restype=container"
 
     headers = %{
-      :"x-ms-blob-public-access" => "blob",
-      :"x-ms-default-encryption-scope" => "$account-encryption-key",
-      :"x-ms-deny-encryption-scope-override" => false,
+      "x-ms-blob-public-access" => "blob",
+      "x-ms-default-encryption-scope" => "$account-encryption-key",
+      "x-ms-deny-encryption-scope-override" => false,
       :"Content-Type" => "application/octet-stream"
     }
 
@@ -134,6 +133,7 @@ defmodule AzureStorage.Blob do
 
   @doc """
   The Delete Container operation marks the specified container for deletion.
+
   The container and any blobs contained within it are later deleted during garbage collection.
   """
   def delete_container(%Context{service: "blob"} = context, container) do
@@ -146,19 +146,28 @@ defmodule AzureStorage.Blob do
 
   @doc """
   Create new blob in a blob container
+
+  Supported options\n#{NimbleOptions.docs(Schema.put_blob_options())}
+
+  ```
+  {:ok, context} = AzureStorage.create_blob_service("account_name", "account_key")
+  context |> put_blob("blobs", "cache-key-1.json", "{\\"data\\": []}", content_type: "application/json;charset=\\"utf-8\\"")
+  ```
   """
-  def create_blob(
+  def put_blob(
         %Context{service: "blob"} = context,
         container,
         filename,
         content,
-        _options \\ []
+        options \\ []
       ) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.put_blob_options())
     query = "#{container}/#{filename}"
 
     headers = %{
-      :"x-ms-blob-type" => "BlockBlob",
-      :"x-ms-blob-content-encoding" => "UTF8"
+      "x-ms-blob-type" => "BlockBlob",
+      "x-ms-blob-content-encoding" => "UTF8",
+      :"Content-Type" => opts[:content_type]
     }
 
     context
@@ -166,12 +175,64 @@ defmodule AzureStorage.Blob do
     |> request()
   end
 
-  def get_blob_content(%Context{service: "blob"} = context, container, blob_name) do
-    query = "#{container}/#{blob_name}"
+  @doc """
+  Acquires a new lease. If container and blob are specified, acquires a blob lease. Otherwise, if only container is specified and blob is null, acquires a container lease.
+
+  Supported options\n#{NimbleOptions.docs(Schema.acquire_lease_options())}
+  """
+  def acquire_lease(%Context{service: "blob"} = context, container, filename, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.acquire_lease_options())
+    query = "#{container}/#{filename}?comp=lease"
+
+    headers = %{
+      "x-ms-lease-action" => "acquire",
+      "x-ms-lease-duration" => opts[:duration]
+    }
 
     context
-    |> build(method: :get, path: query)
+    |> build(method: :put, path: query, headers: headers)
     |> request()
+    |> parse_lease_response()
+  end
+
+  @doc """
+  Free acquired lease so other client may immediately acquire a lease against the blob.
+  """
+  def lease_release(%Context{service: "blob"} = context, container, filename, lease_id) do
+    # @dev: action=release is not part of the spec
+    # it is here so ExVCR can record the action
+    query = "#{container}/#{filename}?comp=lease&action=release"
+
+    headers = %{
+      "x-ms-lease-action" => "release",
+      "x-ms-lease-id" => lease_id
+    }
+
+    context
+    |> build(method: :put, path: query, headers: headers)
+    |> request()
+    |> parse_lease_response()
+  end
+
+  @doc """
+  The Get Blob operation reads or downloads a blob from the system, including its metadata and properties.
+
+  Supported options\n#{NimbleOptions.docs(Schema.get_blob_options())}
+  """
+  def get_blob_content(%Context{service: "blob"} = context, container, filename, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.get_blob_options())
+    query = "#{container}/#{filename}"
+
+    headers =
+      case String.length(opts[:lease_id]) > 0 do
+        true -> %{"x-ms-lease-id" => opts[:lease_id]}
+        _ -> %{}
+      end
+
+    context
+    |> build(method: :get, path: query, headers: headers)
+    |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -184,4 +245,19 @@ defmodule AzureStorage.Blob do
     |> build(method: :delete, path: query)
     |> request()
   end
+
+  # ------------ helpers
+  defp parse_lease_response({:ok, _, headers}) do
+    props =
+      headers
+      |> Enum.reduce(%{}, fn
+        {"ETag", value}, map -> Map.put(map, "ETag", value)
+        {"x-ms-lease-id", value}, map -> Map.put(map, "lease_id", value)
+        _, map -> map
+      end)
+
+    {:ok, props}
+  end
+
+  defp parse_lease_response({:error, reason}), do: {:error, reason}
 end

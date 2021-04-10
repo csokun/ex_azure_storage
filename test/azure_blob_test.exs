@@ -28,4 +28,61 @@ defmodule AzureStorage.BlobTest do
       end
     end
   end
+
+  describe "leasing" do
+    test "it should be able to acquire lease for a given blob", %{context: context} do
+      use_cassette "acquire_lease_blob", match_requests_on: [:query] do
+        filename = "hotel-room-a.json"
+
+        context
+        |> Blob.put_blob("bookings", filename, "{\"checkIn\": \"2021-01-01\"}")
+
+        assert {:ok, lease} = context |> Blob.acquire_lease("bookings", filename)
+        assert %{"ETag" => _, "lease_id" => _} = lease
+      end
+    end
+
+    test "it should be able to release acquired lease", %{context: context} do
+      use_cassette "lease_release", match_requests_on: [:query] do
+        filename = "hotel-room-b.json"
+
+        context
+        |> Blob.put_blob("bookings", filename, "{\"checkIn\": \"2021-01-01\"}")
+
+        assert {:ok, %{"lease_id" => lease_id}} =
+                 context |> Blob.acquire_lease("bookings", filename)
+
+        assert {:ok, _} = context |> Blob.lease_release("bookings", filename, lease_id)
+      end
+    end
+  end
+
+  describe "get_blob_content" do
+    test "it should be able to get text blob content", %{context: context} do
+      use_cassette "get_blob_content_txt" do
+        # arrange
+        content = "hello world"
+
+        context
+        |> Blob.put_blob("bookings", "text1.txt", content)
+
+        assert {:ok, ^content} = context |> Blob.get_blob_content("bookings", "text1.txt")
+      end
+    end
+
+    test "it should be able to get json blob content", %{context: context} do
+      use_cassette "get_blob_content_json" do
+        # arrange
+        content = "{\"data\": []}"
+
+        context
+        |> Blob.put_blob("bookings", "cache-key-1.json", content,
+          content_type: "application/json;charset=\"utf-8\""
+        )
+
+        assert {:ok, %{"data" => []}} =
+                 context |> Blob.get_blob_content("bookings", "cache-key-1.json")
+      end
+    end
+  end
 end
