@@ -42,6 +42,11 @@ defmodule AzureStorage.Blob.Schema do
         type: :string,
         default: "",
         doc: "Active lease id"
+      ],
+      json: [
+        type: :boolean,
+        default: false,
+        doc: "If `true` return content is in `map()`"
       ]
     ]
 

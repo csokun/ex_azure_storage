@@ -16,5 +16,5 @@ defmodule AzureStorage.Request do
   end
 
   defp parse_response(response, :json), do: parse_response_body_as_json(response)
-  defp parse_response(response, _), do: response
+  defp parse_response({:ok, %{body: body, headers: headers}}, _), do: {:ok, body, headers}
 end
