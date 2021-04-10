@@ -36,6 +36,15 @@ defmodule AzureStorage.Blob.Schema do
       ]
     ]
 
+  def get_blob_options,
+    do: [
+      lease_id: [
+        type: :string,
+        default: "",
+        doc: "Active lease id"
+      ]
+    ]
+
   def acquire_lease_options,
     do: [
       duration: [

@@ -29,17 +29,30 @@ defmodule AzureStorage.BlobTest do
     end
   end
 
-  describe "acquire lease" do
+  describe "leasing" do
     test "it should be able to acquire lease for a given blob", %{context: context} do
-      use_cassette "acquire_lease_blob" do
-        # arrange
-        # TODO: for some reason ExVCR can't capture second PUT request,
-        # comment arrange step until figure out what wrong
-        # context
-        # |> Blob.put_blob("bookings", "hotel-room-a.json", "{\"checkIn\": \"2021-01-01\"}")
+      use_cassette "acquire_lease_blob", match_requests_on: [:query] do
+        filename = "hotel-room-a.json"
 
-        assert {:ok, lease} = context |> Blob.acquire_lease("bookings", "hotel-room-a.json")
+        context
+        |> Blob.put_blob("bookings", filename, "{\"checkIn\": \"2021-01-01\"}")
+
+        assert {:ok, lease} = context |> Blob.acquire_lease("bookings", filename)
         assert %{"ETag" => _, "lease_id" => _} = lease
+      end
+    end
+
+    test "it should be able to release acquired lease", %{context: context} do
+      use_cassette "lease_release", match_requests_on: [:query] do
+        filename = "hotel-room-b.json"
+
+        context
+        |> Blob.put_blob("bookings", filename, "{\"checkIn\": \"2021-01-01\"}")
+
+        assert {:ok, %{"lease_id" => lease_id}} =
+                 context |> Blob.acquire_lease("bookings", filename)
+
+        assert {:ok, _} = context |> Blob.lease_release("bookings", filename, lease_id)
       end
     end
   end

@@ -196,13 +196,41 @@ defmodule AzureStorage.Blob do
   end
 
   @doc """
-  The Get Blob operation reads or downloads a blob from the system, including its metadata and properties.
+  Free acquired lease so other client may immediately acquire a lease against the blob.
   """
-  def get_blob_content(%Context{service: "blob"} = context, container, blob_name) do
-    query = "#{container}/#{blob_name}"
+  def lease_release(%Context{service: "blob"} = context, container, filename, lease_id) do
+    # @dev: action=release is not part of the spec
+    # it is here so ExVCR can record the action
+    query = "#{container}/#{filename}?comp=lease&action=release"
+
+    headers = %{
+      "x-ms-lease-action" => "release",
+      "x-ms-lease-id" => lease_id
+    }
 
     context
-    |> build(method: :get, path: query)
+    |> build(method: :put, path: query, headers: headers)
+    |> request()
+    |> parse_lease_response()
+  end
+
+  @doc """
+  The Get Blob operation reads or downloads a blob from the system, including its metadata and properties.
+
+  Supported options\n#{NimbleOptions.docs(Schema.get_blob_options())}
+  """
+  def get_blob_content(%Context{service: "blob"} = context, container, filename, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.get_blob_options())
+    query = "#{container}/#{filename}"
+
+    headers =
+      case String.length(opts[:lease_id]) > 0 do
+        true -> %{"x-ms-lease-id" => opts[:lease_id]}
+        _ -> %{}
+      end
+
+    context
+    |> build(method: :get, path: query, headers: headers)
     |> request()
     |> parse_body_response()
   end
