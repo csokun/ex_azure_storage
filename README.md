@@ -10,7 +10,7 @@ by adding `ex_azure_storage` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ex_azure_storage, "~> 0.1.2"}
+    {:ex_azure_storage, "~> 0.1.3"}
   ]
 end
 ```
@@ -19,13 +19,12 @@ end
 Common usage
 
 ```elixir
+alias AzureStorage.Queue 
 {:ok, context} = AzureStorage.create_queue_service("azure-account-name", "azure-account-key")
-queue_name="sampleq"
 
 context
-  |> AzureStorage.Queue.get_messages(queue_name, [number_of_messages: 25, visibility_timeout: 60])
+  |> get_messages("order-queue", number_of_messages: 25, visibility_timeout: 60)
   |> IO.inspect()
-
 ```
 
 Full documentation can be found at [https://hexdocs.pm/ex_azure_storage](https://hexdocs.pm/ex_azure_storage).
