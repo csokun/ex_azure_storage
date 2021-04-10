@@ -81,7 +81,7 @@ defmodule AzureStorage.BlobTest do
         )
 
         assert {:ok, %{"data" => []}} =
-                 context |> Blob.get_blob_content("bookings", "cache-key-1.json")
+                 context |> Blob.get_blob_content("bookings", "cache-key-1.json", json: true)
       end
     end
   end

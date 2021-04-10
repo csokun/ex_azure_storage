@@ -218,6 +218,16 @@ defmodule AzureStorage.Blob do
   The Get Blob operation reads or downloads a blob from the system, including its metadata and properties.
 
   Supported options\n#{NimbleOptions.docs(Schema.get_blob_options())}
+
+  ```
+  # get plain/text content
+  context |> get_blob_content("container1", "data.txt")
+  {:ok, "Hello World!"}
+
+  # get json content
+  context |> get_blob_content("container1", "data.json", json: true)
+  {:ok, %{"data" => []}}
+  ```
   """
   def get_blob_content(%Context{service: "blob"} = context, container, filename, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.get_blob_options())
@@ -229,9 +239,15 @@ defmodule AzureStorage.Blob do
         _ -> %{}
       end
 
+    response_body =
+      case opts[:json] do
+        true -> :json
+        false -> :full
+      end
+
     context
     |> build(method: :get, path: query, headers: headers)
-    |> request()
+    |> request(response_body: response_body)
     |> parse_body_response()
   end
 
