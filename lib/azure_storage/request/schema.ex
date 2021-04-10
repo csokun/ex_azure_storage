@@ -23,4 +23,12 @@ defmodule AzureStorage.Request.Schema do
         default: %{}
       ]
     ]
+
+  def request_options,
+    do: [
+      response_body: [
+        type: {:in, [:full, :json]},
+        default: :json
+      ]
+    ]
 end

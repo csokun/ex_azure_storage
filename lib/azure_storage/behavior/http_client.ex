@@ -1,8 +1,5 @@
 defmodule Http.Client.Behaviour do
   @moduledoc false
-  alias HTTPoison.Response
-  alias HTTPoison.AsyncResponse
-  alias HTTPoison.Error
 
   @typep method :: :get | :post | :put | :patch | :delete | :options | :head | :merge
   @typep url :: binary()
@@ -10,18 +7,7 @@ defmodule Http.Client.Behaviour do
   @typep headers :: [{atom, binary}] | [{binary, binary}] | %{binary => binary}
   @typep options :: Keyword.t()
 
-  @callback get(url, headers, options) ::
-              {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
-
-  @callback post(url, body, headers, options) ::
-              {:ok, map()} | {:error, binary() | map()}
-
-  @callback put(url, body, headers, options) ::
-              {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
-
-  @callback delete(url, headers, options) ::
-              {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
-
   @callback request(method, url, body, headers, options) ::
-              {:ok, Response.t() | AsyncResponse.t()} | {:error, Error.t()}
+              {:ok, %{status_code: pos_integer, headers: any, body: binary}}
+              | {:error, binary() | map()}
 end

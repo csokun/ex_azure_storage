@@ -1,32 +1,20 @@
 defmodule AzureStorage.Request do
   require Logger
-  alias AzureStorage.Request.{Context, SharedKey}
+  alias AzureStorage.Request.{Context, SharedKey, Schema}
   alias Http.Client
+  import AzureStorage.Parser
 
   def build(%Context{} = context, config \\ []), do: Context.build(context, config)
 
-  def request(%Context{method: :get, url: url} = context) do
+  def request(%Context{method: method, url: url, body: body} = context, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.request_options())
+
     headers = context |> SharedKey.sign_request()
-    Client.get(url, headers, [])
+
+    Client.request(method, url, body, headers, options)
+    |> parse_response(opts[:response_body])
   end
 
-  def request(%Context{method: :delete, url: url} = context) do
-    headers = context |> SharedKey.sign_request()
-    Client.delete(url, headers, [])
-  end
-
-  def request(%Context{method: :post, url: url, body: body} = context) do
-    headers = context |> SharedKey.sign_request()
-    Client.post(url, body, headers, [])
-  end
-
-  def request(%Context{method: :put, url: url, body: body} = context) do
-    headers = context |> SharedKey.sign_request()
-    Client.put(url, body, headers, [])
-  end
-
-  def request(%Context{method: :merge, url: url, body: body} = context) do
-    headers = context |> SharedKey.sign_request()
-    Client.merge(url, body, headers, [])
-  end
+  defp parse_response(response, :json), do: parse_response_body_as_json(response)
+  defp parse_response(response, _), do: response
 end
