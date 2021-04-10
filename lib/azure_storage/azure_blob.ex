@@ -246,6 +246,81 @@ defmodule AzureStorage.Blob do
     |> request()
   end
 
+  @doc """
+  Sharing blob file using Share Access Signature
+
+  Supported options\n#{NimbleOptions.docs(Schema.share_options())}
+
+  Example:
+
+  ```
+  # generate URL for sharing a read only access
+  context
+    |> AzureStorage.Blob.share(
+      path: "/bookings/hotel-room-a.json",
+      permissions: "r",
+      start: "2021-04-10T10:48:02Z",
+      expiry: "2021-04-11T13:48:02Z"
+      )
+    |> HTTPoison.get!([], [ssl: [versions: [:"tlsv1.2"]]])
+    |> IO.inspect()
+  ```
+  """
+  def share(
+        %Context{service: "blob", account: account, base_url: base_url, headers: headers},
+        options \\ []
+      ) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.share_options())
+
+    version = headers[:"x-ms-version"]
+    now = DateTime.truncate(DateTime.utc_now(), :second)
+
+    start = opts[:start] || DateTime.add(now, -3600, :second) |> DateTime.to_iso8601()
+
+    expiry = opts[:expiry] || DateTime.add(now, 30 * 60, :second) |> DateTime.to_iso8601()
+
+    path =
+      case String.starts_with?(opts[:path], "/") do
+        true -> String.slice(opts[:path], 1..-1)
+        false -> opts[:path]
+      end
+
+    string_to_sign =
+      [
+        opts[:permissions],
+        start,
+        expiry,
+        "/blob/#{account.name}/#{path}",
+        "",
+        opts[:ip_range],
+        "",
+        version,
+        "b",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+      |> Enum.join("\n")
+
+    signature = account |> sign(string_to_sign)
+
+    query_string =
+      %{
+        "sp" => opts[:permissions],
+        "sv" => version,
+        "sr" => "b",
+        "st" => start,
+        "se" => expiry,
+        "sig" => signature
+      }
+      |> URI.encode_query()
+
+    "#{base_url}/#{path}?#{query_string}"
+  end
+
   # ------------ helpers
   defp parse_lease_response({:ok, _, headers}) do
     props =
@@ -260,4 +335,11 @@ defmodule AzureStorage.Blob do
   end
 
   defp parse_lease_response({:error, reason}), do: {:error, reason}
+
+  defp sign(%{key: account_key}, data) do
+    {:ok, key} = account_key |> Base.decode64()
+
+    :crypto.hmac(:sha256, key, data)
+    |> Base.encode64()
+  end
 end

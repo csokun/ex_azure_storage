@@ -59,4 +59,28 @@ defmodule AzureStorage.Blob.Schema do
         doc: "Proposed lease ID, in a GUID string format."
       ]
     ]
+
+  def share_options,
+    do: [
+      path: [
+        type: :string,
+        doc: "sharing path `/<container>/<filename>` for example `/bookings/hotel-room-a.json`",
+        required: true
+      ],
+      permissions: [
+        type: :string,
+        default: "r",
+        required: true
+      ],
+      start: [
+        type: :string,
+        doc: "Start from date in ISO-8601 format e.g `2021-04-10T10:48:02Z`",
+        required: true
+      ],
+      expiry: [
+        type: :string,
+        doc: "Expiry date in ISO-8601 format e.g `2021-04-10T10:48:02Z`",
+        required: true
+      ]
+    ]
 end
