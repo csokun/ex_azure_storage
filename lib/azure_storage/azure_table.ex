@@ -5,19 +5,45 @@ defmodule AzureStorage.Table do
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/table-service-rest-api
 
   ```
+  alias AzureStorage.Table.EntityDescriptor
+  import AzureStorage.Table.EntityGenerator
+
   {:ok, context} = AzureStorage.create_table_service("account_name", "account_key")
-  context |> retrieve_entity("partition_key_value", "row_key_value")
+
+  # build entity
+  entity = %EntityDescriptor{}
+    |> partition_key("partition_key_1000")
+    |> row_key("row_key_1000")
+    |> string("Name", "Linux")
+    |> int64("Val1", 42)
+    |> double("Val2", 42.2)
+
+  # insert entity
+  context |> insert_entity("table1", entity)
+
+  # retrieve entity from server
+  {
+    :ok,
+    %EntityDescriptor{} = existing_entity
+  } = context |> retrieve_entity("partition_key_value", "row_key_value")
+
+  # update entity
+  entity = existing_entity |> string("Name", "Ubuntu")
+  {:ok, %{ETag => etag}} = context |> update_entity("table1", entity)
   ```
   """
   alias AzureStorage.Table.{EntityDescriptor, Query, Entity}
   alias AzureStorage.Request.Context
   import AzureStorage.Table.QueryBuilder
+  import AzureStorage.Table.EntityGenerator
   import AzureStorage.Request
   import AzureStorage.Parser
 
   @doc """
   Retrieve an entity by PartitionKey and RowKey
   """
+  @spec retrieve_entity(Context.t(), String.t(), String.t(), String.t()) ::
+          {:ok, EntityDescriptor.t()} | {:error, String.t()}
   def retrieve_entity(%Context{service: "table"} = context, table_name, partition_key, row_key) do
     query =
       "#{table_name}(PartitionKey='#{partition_key}',RowKey='#{row_key}')"
@@ -27,6 +53,13 @@ defmodule AzureStorage.Table do
     |> build(method: :get, path: query)
     |> request()
     |> parse_body_response()
+    |> case do
+      {:ok, entity} ->
+        {:ok, map_to_entity_descriptor(entity)}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
   end
 
   @doc """
@@ -221,7 +254,7 @@ defmodule AzureStorage.Table do
          {:ok, %{"odata.metadata" => _metadata, "value" => entities}, headers}
        ) do
     continuation_token = headers |> parse_continuation_token
-    {:ok, entities, continuation_token}
+    {:ok, Enum.map(entities, &map_to_entity_descriptor/1), continuation_token}
   end
 
   defp parse_entity_change_response({:ok, _, headers}) do
