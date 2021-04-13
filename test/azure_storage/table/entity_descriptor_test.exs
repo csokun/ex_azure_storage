@@ -35,7 +35,7 @@ defmodule AzureStorage.Table.EntityDescriptorTest do
         |> double("Age2", 32.0)
         |> Jason.encode!()
 
-      assert "{\"PartitionKey\":\"\",\"RowKey\":\"\",\"Age\":32,\"Age1\":\"32\",\"Age1@odata.type\":\"Edm.Int64\",\"Age2\":32.0,\"Age2@odata.type\":\"Edm.Double\"}" ==
+      assert "{\"PartitionKey\":\"\",\"RowKey\":\"\",\"Age\":32,\"Age1\":\"32\",\"Age1@odata.type\":\"Edm.Int64\",\"Age2\":32.0}" ==
                json
     end
   end

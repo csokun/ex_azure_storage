@@ -3,12 +3,15 @@ defmodule AzureStorage.Table.EntityDescriptor do
 
   defstruct PartitionKey: %Entity{_: "", "$": "Edm.String"},
             RowKey: %Entity{_: "", "$": "Edm.String"},
+            # server timestamp, not intent to be use by client
+            Timestamp: %Entity{_: "", "$": "Edm.DateTime"},
             Fields: %{},
             ETag: nil
 
   @type t :: %AzureStorage.Table.EntityDescriptor{
           PartitionKey: Entity.t(),
           RowKey: Entity.t(),
+          Timestamp: Entity.t(),
           Fields: map(),
           ETag: String.t() | nil
         }

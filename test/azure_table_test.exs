@@ -1,6 +1,6 @@
 defmodule AzureStorage.TableTest do
   use ExUnit.Case, async: true
-  alias AzureStorage.Table.{EntityDescriptor, Query}
+  alias AzureStorage.Table.{Entity, EntityDescriptor, Query}
   alias AzureStorage.Table
   import AzureStorage.Table.EntityGenerator
   import AzureStorage.Table.QueryBuilder
@@ -19,16 +19,16 @@ defmodule AzureStorage.TableTest do
     test "it should return entity when record found", %{context: context} do
       use_cassette "retrieve_entity_when_exists" do
         assert {:ok,
-                %{
-                  "Active" => true,
-                  "Name" => "Sokun Chorn",
-                  "PartitionKey" => "partition_key_1",
-                  "RowKey" => "row_key_1",
-                  "Score" => 2_000_000,
-                  "Timestamp" => "2021-02-22T10:18:17.5460809Z",
-                  "odata.etag" => "W/\"datetime'2021-02-22T10%3A18%3A17.5460809Z'\"",
-                  "odata.metadata" =>
-                    "https://account-name.table.core.windows.net/$metadata#test/@Element"
+                %EntityDescriptor{
+                  ETag: "W/\"datetime'2021-02-22T10%3A18%3A17.5460809Z'\"",
+                  Fields: %{
+                    "Active" => %Entity{"$": "Edm.Boolean", _: true},
+                    "Name" => %Entity{"$": "Edm.String", _: "Sokun Chorn"},
+                    "Score" => %Entity{"$": "Edm.Int32", _: 2_000_000}
+                  },
+                  PartitionKey: %Entity{"$": "Edm.String", _: "partition_key_1"},
+                  RowKey: %Entity{"$": "Edm.String", _: "row_key_1"},
+                  Timestamp: %Entity{"$": "Edm.DateTime", _: ~U[2021-02-22 10:18:17.546080Z]}
                 }} = context |> Table.retrieve_entity("test", "partition_key_1", "row_key_1")
       end
     end
@@ -160,15 +160,11 @@ defmodule AzureStorage.TableTest do
 
         assert {:ok,
                 %{
-                  "Encoded" => 42,
-                  "FirstName" => "Sokun",
-                  "Name" => "Linux",
-                  "PartitionKey" => "partition_key_1000",
-                  "RowKey" => "row_key_400000",
-                  "Timestamp" => _,
-                  "odata.etag" => _,
-                  "odata.metadata" =>
-                    "https://account-name.table.core.windows.net/$metadata#test/@Element"
+                  Fields: %{
+                    "Encoded" => %Entity{"$": "Edm.Int32", _: 42},
+                    "FirstName" => %Entity{"$": "Edm.String", _: "Sokun"},
+                    "Name" => %Entity{"$": "Edm.String", _: "Linux"}
+                  }
                 }} =
                  context
                  |> Table.retrieve_entity("test", "partition_key_1000", "row_key_400000")
