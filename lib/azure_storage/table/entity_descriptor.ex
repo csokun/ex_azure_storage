@@ -45,7 +45,7 @@ defimpl Jason.Encoder, for: [AzureStorage.Table.EntityDescriptor] do
       _ ->
         map
         |> Map.put(prop, "#{value}")
-        |> Map.put("#{prop}@odata", type)
+        |> Map.put("#{prop}@odata.type", type)
     end
   end
 
