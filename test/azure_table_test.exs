@@ -29,7 +29,9 @@ defmodule AzureStorage.TableTest do
                   PartitionKey: %Entity{"$": "Edm.String", _: "partition_key_1"},
                   RowKey: %Entity{"$": "Edm.String", _: "row_key_1"},
                   Timestamp: %Entity{"$": "Edm.DateTime", _: ~U[2021-02-22 10:18:17.546080Z]}
-                }} = context |> Table.retrieve_entity("test", "partition_key_1", "row_key_1")
+                }} =
+                 context
+                 |> Table.retrieve_entity("test", "partition_key_1", "row_key_1", as: :entity)
       end
     end
 
@@ -63,16 +65,15 @@ defmodule AzureStorage.TableTest do
           |> where("PartitionKey", :eq, "partition_key_1")
           |> top(1)
 
-        continuation_token =
-          "NextPartitionKey=1!20!cGFydGl0aW9uX2tleV8x&NextRowKey=1!12!cm93X2tleV8z"
+        token = "NextPartitionKey=1!20!cGFydGl0aW9uX2tleV8x&NextRowKey=1!12!cm93X2tleV8z"
 
         assert {:ok, [_], new_continuation_token} =
-                 context |> Table.query_entities(query, continuation_token)
+                 context |> Table.query_entities(query, continuation_token: token)
 
         assert "NextPartitionKey=1!20!cGFydGl0aW9uX2tleV8x&NextRowKey=1!12!cm93X2tleV80" =
                  new_continuation_token
 
-        assert continuation_token != new_continuation_token
+        assert token != new_continuation_token
       end
     end
   end
@@ -167,7 +168,25 @@ defmodule AzureStorage.TableTest do
                   }
                 }} =
                  context
-                 |> Table.retrieve_entity("test", "partition_key_1000", "row_key_400000")
+                 |> Table.retrieve_entity("test", "partition_key_1000", "row_key_400000",
+                   as: :entity
+                 )
+
+        assert {
+                 :ok,
+                 %{
+                   "Encoded" => 42,
+                   "FirstName" => "Sokun",
+                   "Name" => "Linux",
+                   "PartitionKey" => "partition_key_1000",
+                   "RowKey" => "row_key_400000",
+                   "Timestamp" => "2021-04-03T10:21:52.6905459Z",
+                   "odata.etag" => "W/\"datetime'2021-04-03T10%3A21%3A52.6905459Z'\"",
+                   "odata.metadata" =>
+                     "https://account-name.table.core.windows.net/$metadata#test/@Element"
+                 }
+               } =
+                 context |> Table.retrieve_entity("test", "partition_key_1000", "row_key_400000")
       end
     end
   end
