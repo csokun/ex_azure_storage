@@ -10,7 +10,7 @@ by adding `ex_azure_storage` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ex_azure_storage, "~> 0.1.3"}
+    {:ex_azure_storage, "~> 0.1.4"}
   ]
 end
 ```
