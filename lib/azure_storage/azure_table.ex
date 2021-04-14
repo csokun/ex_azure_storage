@@ -32,7 +32,7 @@ defmodule AzureStorage.Table do
   {:ok, %{ETag => etag}} = context |> update_entity("table1", entity)
   ```
   """
-  alias AzureStorage.Table.{EntityDescriptor, Query, Entity}
+  alias AzureStorage.Table.{EntityDescriptor, Query, Entity, Schema}
   alias AzureStorage.Request.Context
   import AzureStorage.Table.QueryBuilder
   import AzureStorage.Table.EntityGenerator
@@ -41,52 +41,74 @@ defmodule AzureStorage.Table do
 
   @doc """
   Retrieve an entity by PartitionKey and RowKey
+
+  Supported options\n#{NimbleOptions.docs(Schema.retrieve_entity_options())}
+
+  ```
+  context |> AzureStorage.Table.retrieve_entity("table1", "partition_key", "row_key", as: :json)
+  # {:ok, %{...}}
+
+  context |> AzureStorage.Table.retrieve_entity("table1", "partition_key", "row_key", as: :entity)
+  # {:ok, %EntityDescriptor{}}
+  ```
   """
   @spec retrieve_entity(Context.t(), String.t(), String.t(), String.t()) ::
-          {:ok, EntityDescriptor.t()} | {:error, String.t()}
-  def retrieve_entity(%Context{service: "table"} = context, table_name, partition_key, row_key) do
+          {:ok, map()} | {:error, String.t()}
+  def retrieve_entity(
+        %Context{service: "table"} = context,
+        table_name,
+        partition_key,
+        row_key,
+        options \\ []
+      ) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.retrieve_entity_options())
+
     query =
       "#{table_name}(PartitionKey='#{partition_key}',RowKey='#{row_key}')"
       |> String.replace("'", "%27")
 
-    context
-    |> build(method: :get, path: query)
-    |> request()
-    |> parse_body_response()
-    |> case do
-      {:ok, entity} ->
-        {:ok, map_to_entity_descriptor(entity)}
+    result =
+      context
+      |> build(method: :get, path: query)
+      |> request()
+      |> parse_body_response()
 
-      {:error, reason} ->
-        {:error, reason}
+    case opts[:as] do
+      :json ->
+        result
+
+      _ ->
+        case result do
+          {:ok, entity} ->
+            {:ok, map_to_entity_descriptor(entity)}
+
+          {:error, reason} ->
+            {:error, reason}
+        end
     end
   end
 
   @doc """
   Query entities from a table storage
-  """
-  @spec query_entities(Context.t(), Query.t()) :: {:ok, list(), String.t()} | {:error, String.t()}
-  def query_entities(%Context{service: "table"} = context, %Query{} = query),
-    do: query_entities(context, query, nil)
 
-  @doc """
-  Query entities from a table storage with `continuation_token`.
+  Supported options\n#{NimbleOptions.docs(Schema.query_entities_options())}
   """
-  @spec query_entities(Context.t(), Query.t(), String.t() | nil) ::
+  @spec query_entities(Context.t(), Query.t(), keyword()) ::
           {:ok, list(), String.t()} | {:error, String.t()}
-  def query_entities(%Context{service: "table"} = context, %Query{} = query, continuation_token) do
+  def query_entities(%Context{service: "table"} = context, %Query{} = query, options \\ []) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.query_entities_options())
     odata_query = query |> compile()
 
     path =
-      case continuation_token do
+      case opts[:continuation_token] do
         nil -> odata_query
-        _ -> "#{odata_query}&#{continuation_token}"
+        _ -> "#{odata_query}&#{opts[:continuation_token]}"
       end
 
     context
     |> build(method: :get, path: path)
     |> request()
-    |> parse_query_entities_response()
+    |> parse_query_entities_response(opts[:as])
   end
 
   @doc """
@@ -251,7 +273,16 @@ defmodule AzureStorage.Table do
   end
 
   defp parse_query_entities_response(
-         {:ok, %{"odata.metadata" => _metadata, "value" => entities}, headers}
+         {:ok, %{"odata.metadata" => _metadata, "value" => entities}, headers},
+         :json
+       ) do
+    continuation_token = headers |> parse_continuation_token
+    {:ok, entities, continuation_token}
+  end
+
+  defp parse_query_entities_response(
+         {:ok, %{"odata.metadata" => _metadata, "value" => entities}, headers},
+         :entity
        ) do
     continuation_token = headers |> parse_continuation_token
     {:ok, Enum.map(entities, &map_to_entity_descriptor/1), continuation_token}
