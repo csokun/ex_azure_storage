@@ -23,7 +23,10 @@ defmodule Http.Client do
     do: {:error, reason}
 
   defp get_http_request_options(options) do
-    default_options = [ssl: [versions: [:"tlsv1.2"]]]
+    # not a good idea ref. https://github.com/edgurgel/httpoison/issues/381
+    # tls issue resolved by: mix deps.update certifi
+    # default_options = [ssl: [versions: [:"tlsv1.2"]]]
+    default_options = []
     Keyword.merge(default_options, options)
   end
 end
