@@ -1,16 +1,14 @@
 defmodule AzureStorage.FileShare do
   @moduledoc """
-  Azure File Service
+    Azure File Service
 
-  ref. https://docs.microsoft.com/en-us/rest/api/storageservices/file-service-rest-api
+    ref. https://docs.microsoft.com/en-us/rest/api/storageservices/file-service-rest-api
 
-  ```
-  {:ok, context} = AzureStorage.create_fileshare_service("account_name", "account_key")
-  context |> list_shares()
-  ```
-
+    ```
+    {:ok, context} = AzureStorage.create_fileshare_service("account_name", "account_key")
+    context |> list_shares()
+    ```
   """
-
   alias AzureStorage.Request.Context
   alias AzureStorage.File.Schema
   import AzureStorage.Request
@@ -65,6 +63,16 @@ defmodule AzureStorage.FileShare do
     context
     |> build(method: :get, path: query)
     |> request()
+    |> parse_body_response()
+    |> case do
+      {:ok, %{"EnumerationResults" => %{"#content" => content}}} ->
+        directories = get_in(content, ["Entries", "Directory"])
+        marker = get_in(content, ["NextMarker"])
+        {:ok, %{Items: directories, NextMarker: marker}}
+
+      error ->
+        error
+    end
   end
 
   def directory_exists(%Context{service: "file"} = context, share, path) do

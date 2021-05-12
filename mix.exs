@@ -39,7 +39,7 @@ defmodule AzureStorage.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:elixir_xml_to_map, "~> 1.0"},
+      {:elixir_xml_to_map, "~> 2.0"},
       {:jason, "~> 1.2"},
       {:exvcr, "~> 0.12.2", only: :test},
       {:mox, "~> 1.0.0", only: :test},
