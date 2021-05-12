@@ -182,7 +182,7 @@ defmodule AzureStorage.Queue do
   defp parse_queue_messages_response({:error, _} = response), do: response
 
   defp parse_queue_messages_response({:ok, %{"QueueMessagesList" => list}, _headers}) do
-    case list == %{} do
+    case list == nil do
       true ->
         {:ok, []}
 
