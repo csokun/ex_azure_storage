@@ -43,7 +43,7 @@ defmodule AzureStorage.MixProject do
       {:jason, "~> 1.2"},
       {:exvcr, "~> 0.12.2", only: :test},
       {:mox, "~> 1.0.0", only: :test},
-      {:httpoison, "~> 1.7.0"},
+      {:httpoison, "~> 1.8.0"},
       {:nimble_options, "~> 0.3.5"},
       {:ex_doc, "~> 0.23", only: :dev, runtime: false},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false}
