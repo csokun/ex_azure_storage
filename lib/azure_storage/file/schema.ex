@@ -28,4 +28,12 @@ defmodule AzureStorage.File.Schema do
         doc: "The timeout parameter is expressed in seconds"
       ]
     ]
+
+  def delete_file_options,
+    do: [
+      lease_id: [
+        type: :string,
+        doc: "If the file has an active lease"
+      ]
+    ]
 end
