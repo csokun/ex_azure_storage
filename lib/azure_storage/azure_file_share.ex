@@ -132,4 +132,50 @@ defmodule AzureStorage.FileShare do
     |> request()
     |> parse_body_response()
   end
+
+  # 4Gi
+  @max_upload_file_size 4 * 1024 * 1024
+
+  def create_file(%Context{service: "file"} = context, share, directory, filename, content) do
+    path = "#{share}/#{directory}/#{filename}"
+    content_length = byte_size(content)
+
+    case content_length > @max_upload_file_size do
+      true ->
+        {:error, "INVALID_FILE_LENGTH"}
+
+      false ->
+        create_file_placeholder(context, path, content_length)
+        put_range(context, path, content)
+    end
+  end
+
+  defp create_file_placeholder(%Context{service: "file"} = context, path, content_length) do
+    headers = %{
+      :"x-ms-version" => "2018-03-28",
+      "x-ms-type" => "file",
+      "x-ms-content-length" => content_length
+    }
+
+    context
+    |> build(method: :put, path: path, headers: headers)
+    |> request()
+    |> parse_body_response()
+  end
+
+  defp put_range(%Context{service: "file"} = context, path, content) do
+    content_length = byte_size(content)
+
+    headers = %{
+      :"x-ms-version" => "2018-03-28",
+      :"Content-Length" => content_length,
+      "x-ms-range" => "bytes=0-#{content_length - 1}",
+      "x-ms-write" => "Update"
+    }
+
+    context
+    |> build(method: :put, path: "#{path}?comp=range", headers: headers, body: content)
+    |> request()
+    |> parse_body_response()
+  end
 end
