@@ -179,13 +179,15 @@ defmodule AzureStorage.FileShare do
     |> Stream.chunk_every(@max_acceptable_range_in_bytes)
     |> Stream.map(&Enum.join/1)
     |> Stream.with_index()
-    |> Stream.each(fn {chunk, index} ->
-      # Task.async?
-      # What is the Elixir way to limit threshold?
-      # Say not more than 5 Taks.async unless previous tasks completed
-      context
-      |> put_range(path, chunk, index * @max_acceptable_range_in_bytes)
-    end)
+    |> Task.async_stream(
+      fn {chunk, index} ->
+        context
+        |> put_range(path, chunk, index * @max_acceptable_range_in_bytes)
+      end,
+      max_concurrency: 5,
+      # not sure it is a good idea?
+      timeout: :infinity
+    )
     |> Stream.run()
   end
 
