@@ -1,4 +1,6 @@
 defmodule AzureStorage.FileShare do
+  require Logger
+
   @moduledoc """
   Azure File Service
 
@@ -134,7 +136,10 @@ defmodule AzureStorage.FileShare do
   end
 
   # 4Gi
-  @max_upload_file_size 4 * 1024 * 1024
+  @max_upload_file_size 4 * 1024 * 1024 * 1024
+
+  # 4MiB
+  @max_acceptable_range_in_bytes 4 * 1024 * 1024
 
   def create_file(%Context{service: "file"} = context, share, directory, filename, content) do
     path = "#{share}/#{directory}/#{filename}"
@@ -146,7 +151,7 @@ defmodule AzureStorage.FileShare do
 
       false ->
         create_file_placeholder(context, path, content_length)
-        put_range(context, path, content)
+        update_content(context, path, content)
     end
   end
 
@@ -163,13 +168,34 @@ defmodule AzureStorage.FileShare do
     |> parse_body_response()
   end
 
-  defp put_range(%Context{service: "file"} = context, path, content) do
+  defp update_content(%Context{} = context, path, content)
+       when byte_size(content) <= @max_acceptable_range_in_bytes do
+    put_range(context, path, content)
+  end
+
+  defp update_content(%Context{} = context, path, content) do
+    content
+    |> String.codepoints()
+    |> Stream.chunk_every(@max_acceptable_range_in_bytes)
+    |> Stream.map(&Enum.join/1)
+    |> Stream.with_index()
+    |> Stream.each(fn {chunk, index} ->
+      # Task.async?
+      # What is the Elixir way to limit threshold?
+      # Say not more than 5 Taks.async unless previous tasks completed
+      context
+      |> put_range(path, chunk, index * @max_acceptable_range_in_bytes)
+    end)
+    |> Stream.run()
+  end
+
+  defp put_range(%Context{service: "file"} = context, path, content, offset \\ 0) do
     content_length = byte_size(content)
 
     headers = %{
       :"x-ms-version" => "2018-03-28",
       :"Content-Length" => content_length,
-      "x-ms-range" => "bytes=0-#{content_length - 1}",
+      "x-ms-range" => "bytes=#{offset}-#{offset + content_length - 1}",
       "x-ms-write" => "Update"
     }
 
