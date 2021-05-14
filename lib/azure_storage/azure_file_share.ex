@@ -175,7 +175,7 @@ defmodule AzureStorage.FileShare do
 
   defp update_content(%Context{} = context, path, content) do
     content
-    |> String.codepoints()
+    |> String.graphemes()
     |> Stream.chunk_every(@max_acceptable_range_in_bytes)
     |> Stream.map(&Enum.join/1)
     |> Stream.with_index()
