@@ -1,4 +1,6 @@
 defmodule AzureStorage.FileShare do
+  require Logger
+
   @moduledoc """
   Azure File Service
 
@@ -129,6 +131,78 @@ defmodule AzureStorage.FileShare do
 
     context
     |> build(method: :delete, path: query, headers: headers)
+    |> request()
+    |> parse_body_response()
+  end
+
+  # 4Gi
+  @max_upload_file_size 4 * 1024 * 1024 * 1024
+
+  # 4MiB
+  @max_acceptable_range_in_bytes 4 * 1024 * 1024
+
+  def create_file(%Context{service: "file"} = context, share, directory, filename, content) do
+    path = "#{share}/#{directory}/#{filename}"
+    content_length = byte_size(content)
+
+    case content_length > @max_upload_file_size do
+      true ->
+        {:error, "INVALID_FILE_LENGTH"}
+
+      false ->
+        create_file_placeholder(context, path, content_length)
+        update_content(context, path, content)
+    end
+  end
+
+  defp create_file_placeholder(%Context{service: "file"} = context, path, content_length) do
+    headers = %{
+      :"x-ms-version" => "2018-03-28",
+      "x-ms-type" => "file",
+      "x-ms-content-length" => content_length
+    }
+
+    context
+    |> build(method: :put, path: path, headers: headers)
+    |> request()
+    |> parse_body_response()
+  end
+
+  defp update_content(%Context{} = context, path, content)
+       when byte_size(content) <= @max_acceptable_range_in_bytes do
+    put_range(context, path, content)
+  end
+
+  defp update_content(%Context{} = context, path, content) do
+    content
+    |> String.graphemes()
+    |> Stream.chunk_every(@max_acceptable_range_in_bytes)
+    |> Stream.map(&Enum.join/1)
+    |> Stream.with_index()
+    |> Task.async_stream(
+      fn {chunk, index} ->
+        context
+        |> put_range(path, chunk, index * @max_acceptable_range_in_bytes)
+      end,
+      max_concurrency: 5,
+      # not sure it is a good idea?
+      timeout: :infinity
+    )
+    |> Stream.run()
+  end
+
+  defp put_range(%Context{service: "file"} = context, path, content, offset \\ 0) do
+    content_length = byte_size(content)
+
+    headers = %{
+      :"x-ms-version" => "2018-03-28",
+      :"Content-Length" => content_length,
+      "x-ms-range" => "bytes=#{offset}-#{offset + content_length - 1}",
+      "x-ms-write" => "Update"
+    }
+
+    context
+    |> build(method: :put, path: "#{path}?comp=range", headers: headers, body: content)
     |> request()
     |> parse_body_response()
   end
