@@ -62,12 +62,12 @@ defmodule AzureStorage.FileShare do
   context |> AzureStorage.FileShare.list_directories("testfileshare", "parent-directory")
   {:ok,
    %{
-     Directories: [%{"name" => "dir2"}],
-     Files: [
+     directories: [%{"name" => "dir2"}],
+     files: [
        %{"name" => "test.txt", "size" => 13},
        %{"name" => "file1", "size" => 5242880}
      ],
-     NextMarker: nil
+     marker: nil
    }
   }
   ```
@@ -181,7 +181,10 @@ defmodule AzureStorage.FileShare do
   # 4MiB
   @max_acceptable_range_in_bytes 4 * 1024 * 1024
 
-  def create_file(%Context{service: "file"} = context, share, directory, filename, text)
+  @doc """
+  Creates a new file or replaces a file.
+  """
+  def create_file_from_text(%Context{service: "file"} = context, share, directory, filename, text)
       when is_bitstring(text) do
     path = "#{share}/#{directory}/#{filename}"
     content_length = byte_size(text)
@@ -196,6 +199,9 @@ defmodule AzureStorage.FileShare do
     end
   end
 
+  @doc """
+  Reads or downloads a file from the system, including its metadata and properties.
+  """
   def get_file(%Context{service: "file"} = context, share, directory, filename) do
     path = "#{share}/#{directory}/#{filename}"
 
@@ -204,6 +210,8 @@ defmodule AzureStorage.FileShare do
     |> request()
     |> parse_body_response()
   end
+
+  # helpers
 
   defp create_file_placeholder(%Context{service: "file"} = context, path, content_length) do
     headers = %{

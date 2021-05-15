@@ -112,6 +112,7 @@ defmodule AzureStorage.Blob do
 
   If the container with the same name already exists, the operation fails.
   """
+  @spec create_container(Context.t(), String.t()) :: {:ok, String.t()} | {:error, String.t()}
   def create_container(%Context{service: "blob"} = context, container) do
     # @dev
     # version: 2019-02-02+ requires
@@ -129,6 +130,7 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :put, path: query, headers: headers)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -136,12 +138,14 @@ defmodule AzureStorage.Blob do
 
   The container and any blobs contained within it are later deleted during garbage collection.
   """
+  @spec delete_container(Context.t(), String.t()) :: {:ok, String.t()} | {:error, String.t()}
   def delete_container(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container"
 
     context
     |> build(method: :delete, path: query)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -261,6 +265,7 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :delete, path: query)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
