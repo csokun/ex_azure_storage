@@ -1,4 +1,5 @@
 defmodule AzureStorage.Table.Schema do
+  @moduledoc false
   def retrieve_entity_options,
     do: [
       as: [
