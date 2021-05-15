@@ -39,10 +39,10 @@ defmodule AzureStorage.Parser do
 
     case is_map(marker) do
       true ->
-        {:ok, %{Items: shares, NextMarker: nil}}
+        {:ok, %{items: shares, marker: nil}}
 
       _ ->
-        {:ok, %{Items: shares, NextMarker: marker}}
+        {:ok, %{items: shares, marker: marker}}
     end
   end
 

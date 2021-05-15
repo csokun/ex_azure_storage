@@ -18,7 +18,7 @@ defmodule AzureStorage.Queue do
   This operation lists all of the queues in a given storage account.
   """
   @spec list_queues(Context.t()) ::
-          {:ok, %{Items: list() | [], NextMarker: String.t() | nil}} | {:error, String.t()}
+          {:ok, %{items: list() | [], marker: String.t() | nil}} | {:error, String.t()}
   def list_queues(%Context{service: "queue"} = context) do
     query = "?comp=list"
 
@@ -43,6 +43,7 @@ defmodule AzureStorage.Queue do
     context
     |> build(method: :put, path: query)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -60,6 +61,7 @@ defmodule AzureStorage.Queue do
     context
     |> build(method: :delete, path: query)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -108,13 +110,9 @@ defmodule AzureStorage.Queue do
         text,
         options \\ []
       ) do
-    {:ok, opts} = NimbleOptions.validate(options, Schema.create_message_options())
-    visibility_timeout = opts[:visibility_timeout]
+    {:ok, opts} = NimbleOptions.validate(options, Schema.update_message_options())
 
-    query =
-      "#{queue_name}/messages/#{message_id}?popreceipt=#{pop_receipt}&visibilitytimeout=#{
-        visibility_timeout
-      }"
+    query = "#{queue_name}/messages/#{message_id}?popreceipt=#{pop_receipt}&#{encode_query(opts)}"
 
     context
     |> build(method: :put, path: query, body: create_message_body_xml(text))
@@ -150,13 +148,7 @@ defmodule AzureStorage.Queue do
           {:ok, list() | []} | {:error, String.t()}
   def get_messages(%Context{service: "queue"} = context, queue_name, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.get_messages_options())
-    number_of_messages = opts[:number_of_messages]
-    visibility_timeout = opts[:visibility_timeout]
-
-    query =
-      "#{queue_name}/messages?visibilitytimeout=#{visibility_timeout}&numofmessages=#{
-        number_of_messages
-      }"
+    query = "#{queue_name}/messages?#{encode_query(opts)}"
 
     context
     |> build(method: :get, path: query)
@@ -175,7 +167,7 @@ defmodule AzureStorage.Queue do
 
       _ ->
         message = get_in(list, ["QueueMessage"])
-        {:ok, %{Message: message}}
+        {:ok, %{message: message}}
     end
   end
 

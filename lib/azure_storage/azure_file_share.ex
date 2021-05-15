@@ -62,12 +62,12 @@ defmodule AzureStorage.FileShare do
   context |> AzureStorage.FileShare.list_directories("testfileshare", "parent-directory")
   {:ok,
    %{
-     Directories: [%{"name" => "dir2"}],
-     Files: [
+     directories: [%{"name" => "dir2"}],
+     files: [
        %{"name" => "test.txt", "size" => 13},
        %{"name" => "file1", "size" => 5242880}
      ],
-     NextMarker: nil
+     marker: nil
    }
   }
   ```
@@ -77,16 +77,7 @@ defmodule AzureStorage.FileShare do
   def list_directories(%Context{service: "file"} = context, share, path, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.list_directories_and_files_options())
 
-    query =
-      "#{share}/#{path}?restype=directory&comp=list&timeout=#{opts[:timeout]}&maxresults=#{
-        opts[:max_results]
-      }"
-
-    path =
-      case opts[:marker] do
-        nil -> query
-        _ -> "#{query}&marker=#{opts[:marker]}"
-      end
+    path = "#{share}/#{path}?restype=directory&comp=list&#{encode_query(opts)}"
 
     context
     |> build(method: :get, path: path)
@@ -100,7 +91,7 @@ defmodule AzureStorage.FileShare do
         files = get_in(content, ["Entries", "File"]) |> parse_list_directories_entries()
 
         marker = get_in(content, ["NextMarker"])
-        {:ok, %{Files: files, Directories: directories, NextMarker: marker}}
+        {:ok, %{files: files, directories: directories, marker: marker}}
 
       error ->
         error
@@ -190,7 +181,10 @@ defmodule AzureStorage.FileShare do
   # 4MiB
   @max_acceptable_range_in_bytes 4 * 1024 * 1024
 
-  def create_file(%Context{service: "file"} = context, share, directory, filename, text)
+  @doc """
+  Creates a new file or replaces a file.
+  """
+  def create_file_from_text(%Context{service: "file"} = context, share, directory, filename, text)
       when is_bitstring(text) do
     path = "#{share}/#{directory}/#{filename}"
     content_length = byte_size(text)
@@ -205,13 +199,19 @@ defmodule AzureStorage.FileShare do
     end
   end
 
+  @doc """
+  Reads or downloads a file from the system, including its metadata and properties.
+  """
   def get_file(%Context{service: "file"} = context, share, directory, filename) do
     path = "#{share}/#{directory}/#{filename}"
 
     context
     |> build(method: :get, path: path)
     |> request()
+    |> parse_body_response()
   end
+
+  # helpers
 
   defp create_file_placeholder(%Context{service: "file"} = context, path, content_length) do
     headers = %{
@@ -249,6 +249,8 @@ defmodule AzureStorage.FileShare do
     |> Stream.run()
   end
 
+  # helpers
+
   defp put_range(%Context{service: "file"} = context, path, content, offset \\ 0) do
     content_length = byte_size(content)
 
@@ -269,10 +271,10 @@ defmodule AzureStorage.FileShare do
          "Name" => name,
          "Properties" => %{"Content-Length" => size}
        }),
-       do: [%{"name" => name, "size" => String.to_integer(size)}]
+       do: [%{name: name, size: String.to_integer(size)}]
 
   defp parse_list_directories_entries(%{"Name" => name, "Properties" => nil}),
-    do: [%{"name" => name}]
+    do: [%{name: name}]
 
   defp parse_list_directories_entries([head | tail]),
     do: parse_list_directories_entries(tail, parse_list_directories_entries(head))

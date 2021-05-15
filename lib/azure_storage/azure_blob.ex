@@ -20,10 +20,10 @@ defmodule AzureStorage.Blob do
   Supported options:\n#{NimbleOptions.docs(Schema.list_containers_options())}
   """
   @spec list_containers(Context.t(), keyword()) ::
-          {:ok, %{Items: list() | [], NextMarker: String.t() | nil}} | {:error, String.t()}
+          {:ok, %{items: list() | [], marker: String.t() | nil}} | {:error, String.t()}
   def list_containers(%Context{service: "blob"} = context, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.list_containers_options())
-    query = "?comp=list&maxresults=#{opts[:max_results]}"
+    query = "?comp=list&#{encode_query(opts)}"
 
     context
     |> build(method: :get, path: query)
@@ -78,7 +78,7 @@ defmodule AzureStorage.Blob do
   Supported options:\n#{NimbleOptions.docs(Schema.list_blobs_options())}
   """
   @spec list_blobs(Context.t(), String.t(), keyword()) ::
-          {:ok, %{Items: list() | [], NextMarker: String.t() | nil}}
+          {:ok, %{items: list() | [], marker: String.t() | nil}}
           | {:error, String.t()}
   def list_blobs(%Context{service: "blob"} = context, container, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.list_blobs_options())
@@ -112,6 +112,7 @@ defmodule AzureStorage.Blob do
 
   If the container with the same name already exists, the operation fails.
   """
+  @spec create_container(Context.t(), String.t()) :: {:ok, String.t()} | {:error, String.t()}
   def create_container(%Context{service: "blob"} = context, container) do
     # @dev
     # version: 2019-02-02+ requires
@@ -129,6 +130,7 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :put, path: query, headers: headers)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -136,12 +138,14 @@ defmodule AzureStorage.Blob do
 
   The container and any blobs contained within it are later deleted during garbage collection.
   """
+  @spec delete_container(Context.t(), String.t()) :: {:ok, String.t()} | {:error, String.t()}
   def delete_container(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container"
 
     context
     |> build(method: :delete, path: query)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -173,6 +177,7 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :put, path: query, body: content, headers: headers)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """
@@ -260,6 +265,7 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :delete, path: query)
     |> request()
+    |> parse_body_response()
   end
 
   @doc """

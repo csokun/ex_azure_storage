@@ -41,7 +41,7 @@ defmodule AzureStorage.QueueTest do
                     "TimeNextVisible" => "Mon, 08 Mar 2021 07:45:02 GMT"
                   }
                   | _
-                ]} = context |> Queue.get_messages("busyq", number_of_messages: 2)
+                ]} = context |> Queue.get_messages("busyq", numofmessages: 2)
       end
     end
   end
