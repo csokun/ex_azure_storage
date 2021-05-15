@@ -8,7 +8,7 @@ defmodule AzureStorage.Fileshare.Schema do
           "Filters the results to return only files and directories whose name begins with the specified prefix.",
         required: false
       ],
-      max_results: [
+      maxresults: [
         type: :pos_integer,
         required: false,
         default: 1000,
@@ -17,6 +17,7 @@ defmodule AzureStorage.Fileshare.Schema do
       ],
       marker: [
         type: :string,
+        default: "",
         required: false,
         doc:
           "A string value that identifies the portion of the list to be returned with the next list operation. The operation returns a marker value within the response body if the list returned was not complete. The marker value may then be used in a subsequent call to request the next set of list items."

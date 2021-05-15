@@ -15,8 +15,8 @@ defmodule AzureStorage.BlobTest do
   describe "list_containers" do
     test "it should be able to list blob containers", %{context: context} do
       use_cassette "list_containers" do
-        assert {:ok, %{Items: [_, _], NextMarker: "/account-name/bookings"}} =
-                 context |> Blob.list_containers(max_results: 2)
+        assert {:ok, %{items: [_, _], marker: "/account-name/bookings"}} =
+                 context |> Blob.list_containers(maxresults: 2)
       end
     end
   end

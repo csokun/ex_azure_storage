@@ -15,6 +15,9 @@ defmodule AzureStorage.Request do
     |> parse_response(opts[:response_body])
   end
 
+  @doc false
+  def encode_query(options \\ []), do: URI.encode_query(options)
+
   defp parse_response(response, :json), do: parse_response_body_as_json(response)
   defp parse_response({:ok, %{body: body, headers: headers}}, _), do: {:ok, body, headers}
 end

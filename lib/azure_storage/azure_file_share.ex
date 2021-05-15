@@ -77,16 +77,7 @@ defmodule AzureStorage.FileShare do
   def list_directories(%Context{service: "file"} = context, share, path, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.list_directories_and_files_options())
 
-    query =
-      "#{share}/#{path}?restype=directory&comp=list&timeout=#{opts[:timeout]}&maxresults=#{
-        opts[:max_results]
-      }"
-
-    path =
-      case opts[:marker] do
-        nil -> query
-        _ -> "#{query}&marker=#{opts[:marker]}"
-      end
+    path = "#{share}/#{path}?restype=directory&comp=list&#{encode_query(opts)}"
 
     context
     |> build(method: :get, path: path)
@@ -100,7 +91,7 @@ defmodule AzureStorage.FileShare do
         files = get_in(content, ["Entries", "File"]) |> parse_list_directories_entries()
 
         marker = get_in(content, ["NextMarker"])
-        {:ok, %{Files: files, Directories: directories, NextMarker: marker}}
+        {:ok, %{files: files, directories: directories, marker: marker}}
 
       error ->
         error
@@ -211,6 +202,7 @@ defmodule AzureStorage.FileShare do
     context
     |> build(method: :get, path: path)
     |> request()
+    |> parse_body_response()
   end
 
   defp create_file_placeholder(%Context{service: "file"} = context, path, content_length) do
@@ -249,6 +241,8 @@ defmodule AzureStorage.FileShare do
     |> Stream.run()
   end
 
+  # helpers
+
   defp put_range(%Context{service: "file"} = context, path, content, offset \\ 0) do
     content_length = byte_size(content)
 
@@ -269,10 +263,10 @@ defmodule AzureStorage.FileShare do
          "Name" => name,
          "Properties" => %{"Content-Length" => size}
        }),
-       do: [%{"name" => name, "size" => String.to_integer(size)}]
+       do: [%{name: name, size: String.to_integer(size)}]
 
   defp parse_list_directories_entries(%{"Name" => name, "Properties" => nil}),
-    do: [%{"name" => name}]
+    do: [%{name: name}]
 
   defp parse_list_directories_entries([head | tail]),
     do: parse_list_directories_entries(tail, parse_list_directories_entries(head))
