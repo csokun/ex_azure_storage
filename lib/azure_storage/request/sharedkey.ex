@@ -28,9 +28,9 @@ defmodule AzureStorage.Request.SharedKey do
         _ -> true
       end)
 
-    Logger.debug(
-      "data: #{inspect(data)}\nsignature: #{inspect(auth_key)}\nheaders: #{inspect(headers)}"
-    )
+    # Logger.debug(
+    #   "data: #{inspect(data)}\nsignature: #{inspect(auth_key)}\nheaders: #{inspect(headers)}"
+    # )
 
     headers
   end

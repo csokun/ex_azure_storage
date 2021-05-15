@@ -1,4 +1,4 @@
-defmodule AzureStorage.File.Schema do
+defmodule AzureStorage.Fileshare.Schema do
   @moduledoc false
   def list_directories_and_files_options,
     do: [

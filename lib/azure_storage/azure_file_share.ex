@@ -12,7 +12,7 @@ defmodule AzureStorage.FileShare do
   ```
   """
   alias AzureStorage.Request.Context
-  alias AzureStorage.File.Schema
+  alias AzureStorage.Fileshare.Schema
   import AzureStorage.Request
   import AzureStorage.Parser
 
@@ -57,26 +57,69 @@ defmodule AzureStorage.FileShare do
   It lists the contents only for a single level of the directory hierarchy.
 
   ref. https://docs.microsoft.com/en-us/rest/api/storageservices/list-directories-and-files
+
+  ```
+  context |> AzureStorage.FileShare.list_directories("testfileshare", "parent-directory")
+  {:ok,
+   %{
+     Directories: [%{"name" => "dir2"}],
+     Files: [
+       %{"name" => "test.txt", "size" => 13},
+       %{"name" => "file1", "size" => 5242880}
+     ],
+     NextMarker: nil
+   }
+  }
+  ```
+
+  Supported options:\n#{NimbleOptions.docs(Schema.list_directories_and_files_options())}
   """
   def list_directories(%Context{service: "file"} = context, share, path, options \\ []) do
-    {:ok, _} = NimbleOptions.validate(options, Schema.list_directories_and_files_options())
-    query = "#{share}/#{path}?restype=directory&comp=list"
+    {:ok, opts} = NimbleOptions.validate(options, Schema.list_directories_and_files_options())
+
+    query =
+      "#{share}/#{path}?restype=directory&comp=list&timeout=#{opts[:timeout]}&maxresults=#{
+        opts[:max_results]
+      }"
+
+    path =
+      case opts[:marker] do
+        nil -> query
+        _ -> "#{query}&marker=#{opts[:marker]}"
+      end
 
     context
-    |> build(method: :get, path: query)
+    |> build(method: :get, path: path)
     |> request()
     |> parse_body_response()
     |> case do
       {:ok, %{"EnumerationResults" => %{"#content" => content}}} ->
-        directories = get_in(content, ["Entries", "Directory"])
+        directories =
+          get_in(content, ["Entries", "Directory"]) |> parse_list_directories_entries()
+
+        files = get_in(content, ["Entries", "File"]) |> parse_list_directories_entries()
+
         marker = get_in(content, ["NextMarker"])
-        {:ok, %{Items: directories, NextMarker: marker}}
+        {:ok, %{Files: files, Directories: directories, NextMarker: marker}}
 
       error ->
         error
     end
   end
 
+  @doc """
+  Check if directories exist.
+
+  ```
+  context |> AzureStorage.FileShare.directory_exists("testfileshare", "exist-dir")
+  {:ok, ""}
+
+  context |> AzureStorage.FileShare.directory_exists("testfileshare", "not-exist")
+  {:error, "ResourceNotFound"}
+  ```
+  """
+  @spec directory_exists(Context.t(), String.t(), String.t()) ::
+          {:ok, String.t()} | {:error, String.t()}
   def directory_exists(%Context{service: "file"} = context, share, path) do
     query = "#{share}/#{path}?restype=directory"
 
@@ -86,6 +129,9 @@ defmodule AzureStorage.FileShare do
     |> parse_body_response()
   end
 
+  @doc """
+  Create directory.
+  """
   def create_directory(%Context{service: "file"} = context, share, path) do
     query = "#{share}/#{path}?restype=directory"
 
@@ -99,6 +145,9 @@ defmodule AzureStorage.FileShare do
     |> parse_body_response()
   end
 
+  @doc """
+  Delete empty directoy. Attempt to delete non-empty directory will return an `{:error, reason}`
+  """
   def delete_directory(%Context{service: "file"} = context, share, path) do
     query = "#{share}/#{path}?restype=directory"
 
@@ -141,9 +190,10 @@ defmodule AzureStorage.FileShare do
   # 4MiB
   @max_acceptable_range_in_bytes 4 * 1024 * 1024
 
-  def create_file(%Context{service: "file"} = context, share, directory, filename, content) do
+  def create_file(%Context{service: "file"} = context, share, directory, filename, text)
+      when is_bitstring(text) do
     path = "#{share}/#{directory}/#{filename}"
-    content_length = byte_size(content)
+    content_length = byte_size(text)
 
     case content_length > @max_upload_file_size do
       true ->
@@ -151,8 +201,16 @@ defmodule AzureStorage.FileShare do
 
       false ->
         create_file_placeholder(context, path, content_length)
-        update_content(context, path, content)
+        update_content(context, path, text)
     end
+  end
+
+  def get_file(%Context{service: "file"} = context, share, directory, filename) do
+    path = "#{share}/#{directory}/#{filename}"
+
+    context
+    |> build(method: :get, path: path)
+    |> request()
   end
 
   defp create_file_placeholder(%Context{service: "file"} = context, path, content_length) do
@@ -206,4 +264,21 @@ defmodule AzureStorage.FileShare do
     |> request()
     |> parse_body_response()
   end
+
+  defp parse_list_directories_entries(%{
+         "Name" => name,
+         "Properties" => %{"Content-Length" => size}
+       }),
+       do: [%{"name" => name, "size" => String.to_integer(size)}]
+
+  defp parse_list_directories_entries(%{"Name" => name, "Properties" => nil}),
+    do: [%{"name" => name}]
+
+  defp parse_list_directories_entries([head | tail]),
+    do: parse_list_directories_entries(tail, parse_list_directories_entries(head))
+
+  defp parse_list_directories_entries([], entries), do: entries
+
+  defp parse_list_directories_entries([head | tail], entries),
+    do: parse_list_directories_entries(tail, parse_list_directories_entries(head) ++ entries)
 end
