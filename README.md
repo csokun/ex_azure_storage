@@ -23,7 +23,7 @@ alias AzureStorage.Queue
 {:ok, context} = AzureStorage.create_queue_service("azure-account-name", "azure-account-key")
 
 context
-  |> get_messages("order-queue", number_of_messages: 25, visibility_timeout: 60)
+  |> get_messages("order-queue", numofmessages: 25, visibilitytimeout: 60)
   |> IO.inspect()
 ```
 
