@@ -36,6 +36,8 @@ defmodule AzureStorage.TableTest do
       assert {:ok, %EntityDescriptor{}} =
                context
                |> Table.retrieve_entity(table, p_key, r_key, as: :entity)
+
+      context |> Table.delete_entity(table, p_key, r_key)
     end
 
     test "it should return error when record is not found", %{context: context, table: table} do
@@ -44,6 +46,8 @@ defmodule AzureStorage.TableTest do
       r_key = UUID.uuid4()
 
       assert {:error, "ResourceNotFound"} = context |> Table.retrieve_entity(table, p_key, r_key)
+
+      context |> Table.delete_entity(table, p_key, r_key)
     end
   end
 
@@ -57,6 +61,15 @@ defmodule AzureStorage.TableTest do
       1..5
       |> Enum.each(fn i ->
         context |> Table.insert_entity(table, ed |> row_key("row_key_#{i}"))
+      end)
+    end
+
+    defp delete_entities(context, table, p_key) do
+      1..5
+      |> Enum.each(fn i ->
+        r_key = "row_key_#{i}"
+
+        context |> Table.delete_entity(table, p_key, r_key)
       end)
     end
 
@@ -77,6 +90,8 @@ defmodule AzureStorage.TableTest do
                context |> Table.query_entities(query, continuation_token: continuation_token)
 
       assert continuation_token != new_continuation_token
+
+      context |> delete_entities(table, p_key)
     end
   end
 
@@ -103,6 +118,8 @@ defmodule AzureStorage.TableTest do
 
       ed2 = %{ed2 | ETag: Map.get(etag, "ETag")}
       assert {:ok, _} = context |> Table.update_entity(table, ed2)
+
+      context |> Table.delete_entity(table, p_key, r_key)
     end
 
     test "it should not be able to update existing entity if etag mismatched", %{
@@ -111,11 +128,12 @@ defmodule AzureStorage.TableTest do
     } do
       # arrange
       p_key = "update_entity_2"
+      r_key = "row_key_#{UUID.uuid4()}"
 
       ed =
         %EntityDescriptor{}
         |> partition_key(p_key)
-        |> row_key("row_key_#{UUID.uuid4()}")
+        |> row_key(r_key)
         |> string("Name", "Linux")
         |> int32("Encoded", 42)
 
@@ -124,6 +142,8 @@ defmodule AzureStorage.TableTest do
       ed2 = %{ed | ETag: "W/\"datetime'2021-04-03T04%3A24%3A09.6050786Z'\""}
 
       assert {:error, "UpdateConditionNotSatisfied"} = context |> Table.update_entity(table, ed2)
+
+      context |> Table.delete_entity(table, p_key, r_key)
     end
   end
 
@@ -175,6 +195,8 @@ defmodule AzureStorage.TableTest do
                  "odata.metadata" => _
                }
              } = context |> Table.retrieve_entity(table, p_key, r_key)
+
+      context |> Table.delete_entity(table, p_key, r_key)
     end
   end
 
