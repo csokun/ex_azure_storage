@@ -44,7 +44,7 @@ defmodule AzureStorage.Request.SharedKey do
       account_key
       |> Base.decode64!()
 
-    :crypto.hmac(:sha256, key, data)
+    :crypto.mac(:hmac, :sha256, key, data)
     |> Base.encode64()
   end
 
