@@ -50,6 +50,8 @@ defmodule AzureStorage.BlobTest do
 
       assert {:ok, lease} = context |> Blob.acquire_lease(container, filename)
       assert %{"ETag" => _, "lease_id" => _} = lease
+
+      context |> Blob.delete_blob(container, filename)
     end
 
     test "it should be able to release acquired lease", %{context: context, container: container} do
@@ -61,6 +63,8 @@ defmodule AzureStorage.BlobTest do
       assert {:ok, %{"lease_id" => lease_id}} = context |> Blob.acquire_lease(container, filename)
 
       assert {:ok, _} = context |> Blob.lease_release(container, filename, lease_id)
+
+      context |> Blob.delete_blob(container, filename)
     end
   end
 
@@ -74,6 +78,7 @@ defmodule AzureStorage.BlobTest do
       |> Blob.put_blob(container, filename, content)
 
       assert {:ok, ^content} = context |> Blob.get_blob_content(container, filename)
+      context |> Blob.delete_blob(container, filename)
     end
 
     test "it should be able to get json blob content", %{context: context, container: container} do
@@ -88,6 +93,8 @@ defmodule AzureStorage.BlobTest do
 
       assert {:ok, %{"data" => []}} =
                context |> Blob.get_blob_content(container, filename, json: true)
+
+      context |> Blob.delete_blob(container, filename)
     end
   end
 end
