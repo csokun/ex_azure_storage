@@ -130,13 +130,16 @@ defmodule AzureStorage.Request.Context do
     # query_entities - keep table name only
     token = path |> String.split("?")
 
-    case length(token) > 1 do
-      true ->
-        "/#{account_name}/#{Enum.at(token, 0)}"
+    resource =
+      case length(token) > 1 do
+        true ->
+          "/#{account_name}/#{Enum.at(token, 0)}"
 
-      false ->
-        "/#{account_name}/#{path}"
-    end
+        false ->
+          "/#{account_name}/#{path}"
+      end
+
+    resource |> String.replace("'", "%27")
   end
 
   defp get_generic_service_canonical_resource(account_name, path) do
