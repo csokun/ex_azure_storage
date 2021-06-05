@@ -40,6 +40,30 @@ defmodule AzureStorage.Table do
   import AzureStorage.Parser
 
   @doc """
+  Create a new table in storage account
+  """
+  def create_table(%Context{service: "table"} = context, table) do
+    path = "Tables"
+    body = "{\"TableName\":\"#{table}\"}"
+    headers = %{:"Content-Type" => "application/json"}
+
+    context
+    |> build(method: :post, path: path, body: body, headers: headers)
+    |> request()
+    |> parse_body_response()
+  end
+
+  def delete_table(%Context{service: "table"} = context, table) do
+    path = "Tables('#{table}')"
+    headers = %{:"Content-Type" => "application/json"}
+
+    context
+    |> build(method: :delete, path: path, headers: headers)
+    |> request()
+    |> parse_body_response()
+  end
+
+  @doc """
   Retrieve an entity by PartitionKey and RowKey
 
   Supported options\n#{NimbleOptions.docs(Schema.retrieve_entity_options())}

@@ -4,214 +4,197 @@ defmodule AzureStorage.TableTest do
   alias AzureStorage.Table
   import AzureStorage.Table.EntityGenerator
   import AzureStorage.Table.QueryBuilder
-  use ExVCR.Mock, adapter: ExVCR.Adapter.Hackney
 
   @account_name Application.get_env(:ex_azure_storage, :account_name, "")
   @account_key Application.get_env(:ex_azure_storage, :account_key, "")
 
-  setup do
-    ExVCR.Config.cassette_library_dir("fixture/azure_table")
+  setup_all do
+    table = "test"
     {:ok, context} = AzureStorage.create_table_service(@account_name, @account_key)
-    %{context: context}
+    # ignore error
+    context |> AzureStorage.Table.create_table(table)
+    %{context: context, table: table}
   end
 
   describe "retrieve_entity" do
-    test "it should return entity when record found", %{context: context} do
-      use_cassette "retrieve_entity_when_exists" do
-        assert {:ok,
-                %EntityDescriptor{
-                  ETag: "W/\"datetime'2021-02-22T10%3A18%3A17.5460809Z'\"",
-                  Fields: %{
-                    "Active" => %Entity{"$": "Edm.Boolean", _: true},
-                    "Name" => %Entity{"$": "Edm.String", _: "Sokun Chorn"},
-                    "Score" => %Entity{"$": "Edm.Int32", _: 2_000_000}
-                  },
-                  PartitionKey: %Entity{"$": "Edm.String", _: "partition_key_1"},
-                  RowKey: %Entity{"$": "Edm.String", _: "row_key_1"},
-                  Timestamp: %Entity{"$": "Edm.DateTime", _: ~U[2021-02-22 10:18:17.546080Z]}
-                }} =
-                 context
-                 |> Table.retrieve_entity("test", "partition_key_1", "row_key_1", as: :entity)
-      end
+    test "it should return entity when record found", %{context: context, table: table} do
+      # arrange
+      p_key = "retrieve_entity"
+      r_key = UUID.uuid4()
+
+      ed =
+        %EntityDescriptor{}
+        |> partition_key(p_key)
+        |> row_key(r_key)
+        |> string("Name", "Sokun Chorn")
+        |> int32("Score", 2_000_000)
+        |> boolean("Active", true)
+
+      context |> Table.insert_entity(table, ed)
+
+      # act & assertion
+      assert {:ok, %EntityDescriptor{}} =
+               context
+               |> Table.retrieve_entity(table, p_key, r_key, as: :entity)
     end
 
-    test "it should return error when record is not found", %{context: context} do
-      use_cassette "retrieve_entity_non_exists" do
-        assert {:error, "ResourceNotFound"} =
-                 context |> Table.retrieve_entity("test", "partition_key_1", "row_key_2")
-      end
+    test "it should return error when record is not found", %{context: context, table: table} do
+      # arrange
+      p_key = UUID.uuid4()
+      r_key = UUID.uuid4()
+
+      assert {:error, "ResourceNotFound"} = context |> Table.retrieve_entity(table, p_key, r_key)
     end
   end
 
   describe "query_entities" do
-    test "it should be able to query entities", %{context: context} do
-      use_cassette "query_entities_results" do
-        query =
-          Query.table("test")
-          |> where("PartitionKey", :eq, "partition_key_1")
-          |> top(1)
+    defp insert_entities(context, table, p_key) do
+      ed =
+        %EntityDescriptor{}
+        |> partition_key(p_key)
+        |> string("Name", UUID.uuid4())
 
-        assert {:ok, [_], continuation_token} = context |> Table.query_entities(query)
-
-        assert "NextPartitionKey=1!20!cGFydGl0aW9uX2tleV8x&NextRowKey=1!12!cm93X2tleV8z" =
-                 continuation_token
-      end
+      1..5
+      |> Enum.each(fn i ->
+        context |> Table.insert_entity(table, ed |> row_key("row_key_#{i}"))
+      end)
     end
 
-    test "it should be able to query entities with continuation_token", %{context: context} do
-      use_cassette "query_entities_w_continuation_token_results" do
-        query =
-          Query.table("test")
-          |> where("PartitionKey", :eq, "partition_key_1")
-          |> top(1)
+    test "it should be able to query entities", %{context: context, table: table} do
+      # load data
+      p_key = "query_entities"
+      context |> insert_entities(table, p_key)
 
-        token = "NextPartitionKey=1!20!cGFydGl0aW9uX2tleV8x&NextRowKey=1!12!cm93X2tleV8z"
+      query =
+        Query.table(table)
+        |> where("PartitionKey", :eq, p_key)
+        |> top(1)
 
-        assert {:ok, [_], new_continuation_token} =
-                 context |> Table.query_entities(query, continuation_token: token)
+      # act & assert
+      assert {:ok, [_], continuation_token} = context |> Table.query_entities(query)
 
-        assert "NextPartitionKey=1!20!cGFydGl0aW9uX2tleV8x&NextRowKey=1!12!cm93X2tleV80" =
-                 new_continuation_token
+      assert {:ok, [_], new_continuation_token} =
+               context |> Table.query_entities(query, continuation_token: continuation_token)
 
-        assert token != new_continuation_token
-      end
-    end
-  end
-
-  describe "insert_entity" do
-    test "it should be able to insert new entity", %{context: context} do
-      use_cassette "insert_entity" do
-        ed =
-          %EntityDescriptor{}
-          |> partition_key("partition_key_1000")
-          |> row_key("row_key_100000")
-          |> string("Name", "Linux")
-          |> int32("Encoded", 42)
-
-        assert {:ok, _} = context |> Table.insert_entity("test", ed)
-      end
+      assert continuation_token != new_continuation_token
     end
   end
 
   describe "update_entity" do
-    test "it should be able to update existing entity", %{context: context} do
-      use_cassette "update_entity" do
-        # arrange
-        ed =
-          %EntityDescriptor{}
-          |> partition_key("partition_key_1000")
-          |> row_key("row_key_200000")
-          |> string("Name", "Linux")
-          |> int32("Encoded", 42)
+    test "it should be able to update existing entity", %{context: context, table: table} do
+      # arrange
+      p_key = "update_entity_1"
+      r_key = UUID.uuid4()
 
-        {:ok, etag} = context |> Table.insert_entity("test", ed)
+      ed =
+        %EntityDescriptor{}
+        |> partition_key(p_key)
+        |> row_key(r_key)
+        |> string("Name", "Linux")
+        |> int32("Encoded", 42)
 
-        ed2 =
-          %EntityDescriptor{}
-          |> partition_key("partition_key_1000")
-          |> row_key("row_key_200000")
-          |> string("FirstName", "Sokun")
+      {:ok, etag} = context |> Table.insert_entity(table, ed)
 
-        ed2 = %{ed2 | ETag: Map.get(etag, "ETag")}
-        assert {:ok, _} = context |> Table.update_entity("test", ed2)
-      end
+      ed2 =
+        %EntityDescriptor{}
+        |> partition_key(p_key)
+        |> row_key(r_key)
+        |> string("FirstName", "Sokun")
+
+      ed2 = %{ed2 | ETag: Map.get(etag, "ETag")}
+      assert {:ok, _} = context |> Table.update_entity(table, ed2)
     end
 
-    test "it should not be able to update existing entity if etag mismatched", %{context: context} do
-      use_cassette "update_entity_etag_mismatched" do
-        # arrange
-        ed =
-          %EntityDescriptor{}
-          |> partition_key("partition_key_1000")
-          |> row_key("row_key_300000")
-          |> string("Name", "Linux")
-          |> int32("Encoded", 42)
+    test "it should not be able to update existing entity if etag mismatched", %{
+      context: context,
+      table: table
+    } do
+      # arrange
+      p_key = "update_entity_2"
 
-        {:ok, _} = context |> Table.insert_entity("test", ed)
+      ed =
+        %EntityDescriptor{}
+        |> partition_key(p_key)
+        |> row_key("row_key_#{UUID.uuid4()}")
+        |> string("Name", "Linux")
+        |> int32("Encoded", 42)
 
-        ed2 = %{ed | ETag: "W/\"datetime'2021-04-03T04%3A24%3A09.6050786Z'\""}
+      {:ok, _} = context |> Table.insert_entity(table, ed)
 
-        assert {:error, "UpdateConditionNotSatisfied"} =
-                 context |> Table.update_entity("test", ed2)
-      end
+      ed2 = %{ed | ETag: "W/\"datetime'2021-04-03T04%3A24%3A09.6050786Z'\""}
+
+      assert {:error, "UpdateConditionNotSatisfied"} = context |> Table.update_entity(table, ed2)
     end
   end
 
   describe "merge_entity" do
-    test "it should be able to merge entity properties", %{context: context} do
-      use_cassette "merge_entity" do
-        # arrange
-        ed =
-          %EntityDescriptor{}
-          |> partition_key("partition_key_1000")
-          |> row_key("row_key_400000")
-          |> string("Name", "Linux")
-          |> int32("Encoded", 42)
+    test "it should be able to merge entity properties", %{context: context, table: table} do
+      # arrange
+      p_key = "merge_entity"
+      r_key = UUID.uuid4()
 
-        {:ok, etag} = context |> Table.insert_entity("test", ed)
+      ed =
+        %EntityDescriptor{}
+        |> partition_key(p_key)
+        |> row_key(r_key)
+        |> string("Name", "Linux")
+        |> int32("Encoded", 42)
 
-        ed2 =
-          %EntityDescriptor{}
-          |> partition_key("partition_key_1000")
-          |> row_key("row_key_400000")
-          |> string("FirstName", "Sokun")
+      {:ok, etag} = context |> Table.insert_entity(table, ed)
 
-        ed2 = %{ed2 | ETag: Map.get(etag, "ETag")}
-        assert {:ok, _} = context |> Table.merge_entity("test", ed2)
+      ed2 =
+        %EntityDescriptor{}
+        |> partition_key(p_key)
+        |> row_key(r_key)
+        |> string("FirstName", "Sokun")
 
-        assert {:ok,
-                %{
-                  Fields: %{
-                    "Encoded" => %Entity{"$": "Edm.Int32", _: 42},
-                    "FirstName" => %Entity{"$": "Edm.String", _: "Sokun"},
-                    "Name" => %Entity{"$": "Edm.String", _: "Linux"}
-                  }
-                }} =
-                 context
-                 |> Table.retrieve_entity("test", "partition_key_1000", "row_key_400000",
-                   as: :entity
-                 )
+      ed2 = %{ed2 | ETag: Map.get(etag, "ETag")}
+      assert {:ok, _} = context |> Table.merge_entity(table, ed2)
 
-        assert {
-                 :ok,
-                 %{
-                   "Encoded" => 42,
-                   "FirstName" => "Sokun",
-                   "Name" => "Linux",
-                   "PartitionKey" => "partition_key_1000",
-                   "RowKey" => "row_key_400000",
-                   "Timestamp" => "2021-04-03T10:21:52.6905459Z",
-                   "odata.etag" => "W/\"datetime'2021-04-03T10%3A21%3A52.6905459Z'\"",
-                   "odata.metadata" =>
-                     "https://account-name.table.core.windows.net/$metadata#test/@Element"
-                 }
-               } =
-                 context |> Table.retrieve_entity("test", "partition_key_1000", "row_key_400000")
-      end
+      assert {:ok,
+              %{
+                Fields: %{
+                  "Encoded" => %Entity{"$": "Edm.Int32", _: 42},
+                  "FirstName" => %Entity{"$": "Edm.String", _: "Sokun"},
+                  "Name" => %Entity{"$": "Edm.String", _: "Linux"}
+                }
+              }} =
+               context
+               |> Table.retrieve_entity(table, p_key, r_key, as: :entity)
+
+      assert {
+               :ok,
+               %{
+                 "Encoded" => 42,
+                 "FirstName" => "Sokun",
+                 "Name" => "Linux",
+                 "PartitionKey" => ^p_key,
+                 "RowKey" => ^r_key,
+                 "Timestamp" => _,
+                 "odata.etag" => _,
+                 "odata.metadata" => _
+               }
+             } = context |> Table.retrieve_entity(table, p_key, r_key)
     end
   end
 
   describe "delete_entity" do
-    test "it should be able to delete an entity", %{context: context} do
-      use_cassette "delete_entity" do
-        # arrange
-        ed =
-          %EntityDescriptor{}
-          |> partition_key("partition_key_1000")
-          |> row_key("row_key_500000")
-          |> string("Name", "Linux")
+    test "it should be able to delete an entity", %{context: context, table: table} do
+      # arrange
+      p_key = "delete_entity"
+      r_key = UUID.uuid4()
 
-        {:ok, etag} = context |> Table.insert_entity("test", ed)
+      ed =
+        %EntityDescriptor{}
+        |> partition_key(p_key)
+        |> row_key(r_key)
+        |> string("Name", "Linux")
 
-        assert {:ok, ""} =
-                 context
-                 |> Table.delete_entity(
-                   "test",
-                   "partition_key_1000",
-                   "row_key_500000",
-                   Map.get(etag, "ETag")
-                 )
-      end
+      {:ok, etag} = context |> Table.insert_entity(table, ed)
+
+      assert {:ok, ""} =
+               context
+               |> Table.delete_entity(table, p_key, r_key, Map.get(etag, "ETag"))
     end
   end
 end

@@ -41,10 +41,9 @@ defmodule AzureStorage.MixProject do
     [
       {:elixir_xml_to_map, "~> 2.0"},
       {:jason, "~> 1.2"},
-      {:exvcr, "~> 0.12.2", only: :test},
-      {:mox, "~> 1.0.0", only: :test},
       {:httpoison, "~> 1.8.0"},
       {:nimble_options, "~> 0.3.5"},
+      {:uuid, "~> 1.1", only: :test, runtime: false},
       {:ex_doc, "~> 0.23", only: :dev, runtime: false},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
