@@ -42,6 +42,7 @@ defmodule AzureStorage.Table do
   @doc """
   Create a new table in storage account
   """
+  @spec create_table(Context.t(), String.t()) :: {:ok, String.t()} | {:error, String.t()}
   def create_table(%Context{service: "table"} = context, table) do
     path = "Tables"
     body = "{\"TableName\":\"#{table}\"}"
@@ -53,6 +54,10 @@ defmodule AzureStorage.Table do
     |> parse_body_response()
   end
 
+  @doc """
+  Delete table from storage account
+  """
+  @spec delete_table(Context.t(), String.t()) :: {:ok, String.t()} | {:error, String.t()}
   def delete_table(%Context{service: "table"} = context, table) do
     path = "Tables('#{table}')"
     headers = %{:"Content-Type" => "application/json"}

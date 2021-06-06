@@ -32,7 +32,8 @@ defmodule AzureStorage.Blob do
   end
 
   @doc """
-  The Get Container Properties operation returns all user-defined metadata and system properties for the specified container.  The data returned does not include the container's list of blobs.
+  The Get Container Properties operation returns all user-defined metadata and system properties for the specified container.
+  The data returned does not include the container's list of blobs.
   """
   def get_container_properties(%Context{service: "blob"} = context, container) do
     query = "#{container}?restype=container"
@@ -155,7 +156,11 @@ defmodule AzureStorage.Blob do
 
   ```
   {:ok, context} = AzureStorage.create_blob_service("account_name", "account_key")
-  context |> put_blob("blobs", "cache-key-1.json", "{\\"data\\": []}", content_type: "application/json;charset=\\"utf-8\\"")
+  context |> put_blob("blobs",
+    "cache-key-1.json", 
+    "{\\"data\\": []}", 
+    content_type: "application/json;charset=\\"utf-8\\""
+  )
   ```
   """
   def put_blob(
@@ -226,12 +231,13 @@ defmodule AzureStorage.Blob do
 
   ```
   # get plain/text content
-  context |> get_blob_content("container1", "data.txt")
-  {:ok, "Hello World!"}
+  {:ok, content, attributes} = context
+    |> get_blob_content("container1", "data.txt")
+  {:ok, "Hello World!", %{"Content-Type" => "plain/text", ...}}
 
   # get json content
   context |> get_blob_content("container1", "data.json", json: true)
-  {:ok, %{"data" => []}}
+  {:ok, %{"data" => []}, %{"Content-Type" => "application/json", ...}}
   ```
   """
   def get_blob_content(%Context{service: "blob"} = context, container, filename, options \\ []) do
@@ -253,7 +259,7 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :get, path: query, headers: headers)
     |> request(response_body: response_body)
-    |> parse_body_response()
+    |> parse_body_headers_response()
   end
 
   @doc """
