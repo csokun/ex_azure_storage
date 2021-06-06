@@ -51,6 +51,11 @@ defmodule AzureStorage.Parser do
   def parse_body_response({:ok, body, _}), do: {:ok, body}
   def parse_body_response(response), do: response
 
+  def parse_body_headers_response({:ok, body, headers}),
+    do: {:ok, body, headers |> headers_to_attributes}
+
+  def parse_body_headers_response(response), do: response
+
   def parse_continuation_token(headers) do
     continuation_headers =
       headers
@@ -97,5 +102,16 @@ defmodule AzureStorage.Parser do
         response |> IO.inspect()
         {:error, ""}
     end
+  end
+
+  defp headers_to_attributes(headers) when is_list(headers) do
+    headers
+    |> Enum.filter(fn
+      {"Content-" <> _, _} -> true
+      {"ETag", _} -> true
+      {"x-ms-" <> _, _} -> true
+      _ -> false
+    end)
+    |> Enum.into(%{})
   end
 end

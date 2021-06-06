@@ -201,14 +201,30 @@ defmodule AzureStorage.FileShare do
 
   @doc """
   Reads or downloads a file from the system, including its metadata and properties.
+
+  ```
+  context |> AzureStorage.FileShare.get_file("fileshare1", "directory1", "file1")
+  {:ok,
+    content, 
+    %{
+      "Content-Type" => "application/json",
+      "Content-Length" => "20000",
+      "ETag" => "...",
+      "x-ms-version" => "...",
+      ..
+    }
+  }
+  ```
   """
+  @spec get_file(Context.t(), String.t(), String.t(), String.t()) ::
+          {:ok, binary(), map()} | {:error, String.t()}
   def get_file(%Context{service: "file"} = context, share, directory, filename) do
     path = "#{share}/#{directory}/#{filename}"
 
     context
     |> build(method: :get, path: path)
-    |> request()
-    |> parse_body_response()
+    |> request(response_body: :full)
+    |> parse_body_headers_response()
   end
 
   # helpers

@@ -77,7 +77,7 @@ defmodule AzureStorage.BlobTest do
       context
       |> Blob.put_blob(container, filename, content)
 
-      assert {:ok, ^content} = context |> Blob.get_blob_content(container, filename)
+      assert {:ok, ^content, %{}} = context |> Blob.get_blob_content(container, filename)
       context |> Blob.delete_blob(container, filename)
     end
 
@@ -91,7 +91,7 @@ defmodule AzureStorage.BlobTest do
         content_type: "application/json;charset=\"utf-8\""
       )
 
-      assert {:ok, %{"data" => []}} =
+      assert {:ok, %{"data" => []}, %{}} =
                context |> Blob.get_blob_content(container, filename, json: true)
 
       context |> Blob.delete_blob(container, filename)
