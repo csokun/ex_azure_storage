@@ -52,7 +52,7 @@ defmodule AzureStorage.MixProject do
   defp package do
     [
       maintainers: ["Sokun Chorn"],
-      licenses: ["Apache 2.0"],
+      licenses: ["MIT"],
       links: %{"GitHub" => @repo_url}
     ]
   end
