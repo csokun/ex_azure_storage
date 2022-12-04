@@ -367,7 +367,7 @@ defmodule AzureStorage.Blob do
   defp sign(%{key: account_key}, data) do
     {:ok, key} = account_key |> Base.decode64()
 
-    :crypto.hmac(:sha256, key, data)
+    :crypto.mac(:hmac, :sha256, key, data)
     |> Base.encode64()
   end
 end
