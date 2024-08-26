@@ -193,6 +193,22 @@ defmodule AzureStorage.Blob do
     |> parse_body_response()
   end
 
+  def put_binary_blob(
+    %Context{service: "blob"} = context,
+    container,
+    filename,
+    bytes
+  ) do
+    query = "#{container}/#{filename}"
+    headers = %{
+      "x-ms-blob-type" => "BlockBlob",
+    }
+    context
+    |> build(method: :put, path: query, body: bytes, headers: headers)
+    |> request()
+    |> parse_body_response()
+  end
+
   @doc """
   Acquires a new lease. If container and blob are specified, acquires a blob lease. Otherwise, if only container is specified and blob is null, acquires a container lease.
 

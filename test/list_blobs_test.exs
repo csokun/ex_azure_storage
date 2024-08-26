@@ -19,6 +19,7 @@ defmodule TestExAzureStorage do
     }, marker: marker}} = first_page
     assert is_binary(name)
     assert is_map(properties)
+
     second_page = Blob.list_blobs(context, @container, marker: marker, maxresults: 1)
     {:ok, %{items: %{
       "Name" => name,
