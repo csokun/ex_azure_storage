@@ -202,6 +202,7 @@ defmodule AzureStorage.Blob do
     query = "#{container}/#{filename}"
     headers = %{
       "x-ms-blob-type" => "BlockBlob",
+      :"Content-Type" => "application/octet-stream"
     }
     context
     |> build(method: :put, path: query, body: bytes, headers: headers)

@@ -58,14 +58,24 @@ defmodule AzureStorage.Request.Context do
     headers_cfg = options[:headers]
 
     # TODO: improve headers
-    content_length =
-      case String.length(body) do
-        0 ->
-          %{}
+    content_length = case headers_cfg[:"Content-Type"] do
+      "application/octet-stream" ->
+        case Kernel.byte_size(body) do
+          0 ->
+            %{}
 
-        value ->
-          %{:"content-length" => "#{value}"}
-      end
+          value ->
+            %{:"content-length" => "#{value}"}
+        end
+      _ ->
+        case String.length(body) do
+          0 ->
+            %{}
+
+          value ->
+            %{:"content-length" => "#{value}"}
+        end
+    end
 
     headers =
       default_headers
