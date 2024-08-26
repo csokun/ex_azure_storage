@@ -208,7 +208,7 @@ defmodule AzureStorage.Blob do
     }
     context
     |> build(method: :put, path: query, body: bytes, headers: headers)
-    |> request(timeout: opts[:timeout])
+    |> request(recv_timeout: opts[:recv_timeout], timeout: opts[:timeout])
     |> parse_body_response()
   end
 

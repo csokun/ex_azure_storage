@@ -34,6 +34,11 @@ defmodule AzureStorage.Blob.Schema do
         doc: "Content-Type",
         default: "text/plain;charset=\"utf-8\""
       ],
+      recv_timeout: [
+        type: :pos_integer,
+        default: 30_000,
+        required: false
+      ],
       timeout: [
         type: :pos_integer,
         default: 30_000,

@@ -28,7 +28,7 @@ defmodule TestExAzureStorage do
 
   test "can put with timeout", %{context: context} do
     file_path = "fixtures/2WE4HZPD57KVPL4RQKCB4PUG42SQ2RMJ.pdf"
-    put_binary_blob(file_path, context, timeout: 60000)
+    put_binary_blob(file_path, context, timeout: 60000, recv_timeout: 60000)
   end
 
   defp put_binary_blob(file_path, context, options \\ []) do

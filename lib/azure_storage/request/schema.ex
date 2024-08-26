@@ -30,6 +30,10 @@ defmodule AzureStorage.Request.Schema do
         type: {:in, [:full, :json]},
         default: :json
       ],
+      recv_timeout: [
+        type: :pos_integer,
+        default: 30_000
+      ],
       timeout: [
         type: :pos_integer,
         default: 30_000
