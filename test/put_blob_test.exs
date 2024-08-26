@@ -26,11 +26,16 @@ defmodule TestExAzureStorage do
     put_binary_blob(file_path, context)
   end
 
-  defp put_binary_blob(file_path, context) do
+  test "can put with timeout", %{context: context} do
+    file_path = "fixtures/2WE4HZPD57KVPL4RQKCB4PUG42SQ2RMJ.pdf"
+    put_binary_blob(file_path, context, timeout: 60000)
+  end
+
+  defp put_binary_blob(file_path, context, options \\ []) do
     file = File.open!(file_path)
     content = IO.binread(file, :eof)
     [file_name | _] = file_path |> String.split("/") |> Enum.reverse()
     remote_file_path = "test/#{file_name}"
-    {:ok, _} = Blob.put_binary_blob(context, @container, remote_file_path, content)
+    {:ok, _} = Blob.put_binary_blob(context, @container, remote_file_path, content, options)
   end
 end

@@ -29,6 +29,10 @@ defmodule AzureStorage.Request.Schema do
       response_body: [
         type: {:in, [:full, :json]},
         default: :json
+      ],
+      timeout: [
+        type: :pos_integer,
+        default: 30_000
       ]
     ]
 end

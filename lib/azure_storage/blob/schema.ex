@@ -33,6 +33,11 @@ defmodule AzureStorage.Blob.Schema do
         type: :string,
         doc: "Content-Type",
         default: "text/plain;charset=\"utf-8\""
+      ],
+      timeout: [
+        type: :pos_integer,
+        default: 30_000,
+        required: false
       ]
     ]
 

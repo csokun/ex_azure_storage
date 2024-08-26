@@ -6,7 +6,6 @@ defmodule Http.Client do
 
   def request(method, url, body, headers, options) do
     http_options = get_http_request_options(options)
-
     http_adapter().request(method, url, body, headers, http_options)
     |> process_response
   end

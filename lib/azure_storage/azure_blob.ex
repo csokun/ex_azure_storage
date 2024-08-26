@@ -197,8 +197,10 @@ defmodule AzureStorage.Blob do
     %Context{service: "blob"} = context,
     container,
     filename,
-    bytes
+    bytes,
+    options \\ []
   ) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.put_blob_options())
     query = "#{container}/#{filename}"
     headers = %{
       "x-ms-blob-type" => "BlockBlob",
@@ -206,7 +208,7 @@ defmodule AzureStorage.Blob do
     }
     context
     |> build(method: :put, path: query, body: bytes, headers: headers)
-    |> request()
+    |> request(timeout: opts[:timeout])
     |> parse_body_response()
   end
 
