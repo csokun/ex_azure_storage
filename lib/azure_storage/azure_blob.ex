@@ -336,7 +336,7 @@ defmodule AzureStorage.Blob do
 
     path =
       case String.starts_with?(opts[:path], "/") do
-        true -> String.slice(opts[:path], 1..-1//-1)
+        true -> String.slice(opts[:path], 1..-1//1)
         false -> opts[:path]
       end
 
