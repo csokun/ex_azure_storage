@@ -29,7 +29,7 @@ defmodule AzureStorage.FileShare do
   end
 
   @doc """
-  The Create Share operation creates a new share under the specified account. 
+  The Create Share operation creates a new share under the specified account.
   If the share with the same name already exists, the operation fails.
   """
   def create_share(%Context{service: "file"} = context, share) do
@@ -41,7 +41,7 @@ defmodule AzureStorage.FileShare do
   end
 
   @doc """
-  The Delete Share operation marks the specified share or share snapshot for deletion. 
+  The Delete Share operation marks the specified share or share snapshot for deletion.
   The share or share snapshot and any files contained within it are later deleted during garbage collection.
   """
   def delete_share(%Context{service: "file"} = context, share) do
@@ -205,7 +205,7 @@ defmodule AzureStorage.FileShare do
   ```
   context |> AzureStorage.FileShare.get_file("fileshare1", "directory1", "file1")
   {:ok,
-    content, 
+    content,
     %{
       "Content-Type" => "application/json",
       "Content-Length" => "20000",
@@ -219,12 +219,21 @@ defmodule AzureStorage.FileShare do
   @spec get_file(Context.t(), String.t(), String.t(), String.t()) ::
           {:ok, binary(), map()} | {:error, String.t()}
   def get_file(%Context{service: "file"} = context, share, directory, filename) do
-    path = "#{share}/#{directory}/#{filename}"
+    cond do
+      is_nil(share) or share == "" ->
+        {:error, "missing_share"}
 
-    context
-    |> build(method: :get, path: path)
-    |> request(response_body: :full)
-    |> parse_body_headers_response()
+      is_nil(filename) or filename == "" ->
+        {:error, "missing_filename"}
+
+      true ->
+        path = Path.join([share, directory || "", filename])
+
+        context
+        |> build(method: :get, path: path)
+        |> request(response_body: :full)
+        |> parse_body_headers_response()
+    end
   end
 
   # helpers
