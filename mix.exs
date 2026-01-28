@@ -1,7 +1,7 @@
 defmodule AzureStorage.MixProject do
   use Mix.Project
 
-  @version "0.1.6"
+  @version "0.1.7"
   @repo_url "https://github.com/csokun/ex_azure_storage"
 
   def project do
@@ -39,13 +39,13 @@ defmodule AzureStorage.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:elixir_xml_to_map, "~> 2.0"},
-      {:jason, "~> 1.2"},
-      {:httpoison, "~> 1.8.0"},
+      {:elixir_xml_to_map, "~> 3.1"},
+      {:jason, "~> 1.4"},
+      {:httpoison, "~> 2.3"},
       {:nimble_options, "~> 1.1.1"},
       {:uuid, "~> 1.1", only: :test, runtime: false},
-      {:ex_doc, "~> 0.23", only: :dev, runtime: false},
-      {:credo, "~> 1.4", only: [:dev, :test], runtime: false}
+      {:ex_doc, "~> 0.40.0", only: :dev, runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 
