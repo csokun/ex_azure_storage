@@ -1,4 +1,4 @@
-defmodule TestExAzureStorage do
+defmodule ListBlobsTest do
   use ExUnit.Case
   alias AzureStorage.Blob
 
@@ -13,18 +13,29 @@ defmodule TestExAzureStorage do
 
   test "can paginate", %{context: context} do
     first_page = Blob.list_blobs(context, @container, maxresults: 1)
-    {:ok, %{items: %{
-      "Name" => name,
-      "Properties" => properties
-    }, marker: marker}} = first_page
+
+    {:ok,
+     %{
+       items: %{
+         "Name" => name,
+         "Properties" => properties
+       },
+       marker: marker
+     }} = first_page
+
     assert is_binary(name)
     assert is_map(properties)
 
     second_page = Blob.list_blobs(context, @container, marker: marker, maxresults: 1)
-    {:ok, %{items: %{
-      "Name" => name,
-      "Properties" => properties
-    }}} = second_page
+
+    {:ok,
+     %{
+       items: %{
+         "Name" => name,
+         "Properties" => properties
+       }
+     }} = second_page
+
     assert is_binary(name)
     assert is_map(properties)
   end
