@@ -83,24 +83,32 @@ defmodule AzureStorage.Blob do
           | {:error, String.t()}
   def list_blobs(%Context{service: "blob"} = context, container, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.list_blobs_options())
-    max_results = opts[:max_results]
 
-    prefix =
-      case String.length(opts[:prefix]) do
-        0 -> []
-        _ -> ["&prefix=", opts[:prefix]]
+    max_results =
+      case opts[:maxresults] do
+        nil -> ""
+        _ -> "&maxresults=#{opts[:maxresults]}"
       end
 
-    query =
-      ([
-         container,
-         "?restype=container",
-         container,
-         "&comp=list",
-         "&maxresults=",
-         max_results
-       ] ++ prefix)
-      |> IO.iodata_to_binary()
+    prefix =
+      case opts[:prefix] do
+        nil -> ""
+        _ -> "&prefix=#{opts[:prefix]}"
+      end
+
+    delimiter =
+      case opts[:delimiter] do
+        nil -> ""
+        _ -> "&delimiter=#{opts[:delimiter]}"
+      end
+
+    marker =
+      case opts[:marker] do
+        nil -> ""
+        _ -> "&marker=#{opts[:marker]}"
+      end
+
+    query = "#{container}?restype=container&comp=list#{max_results}#{prefix}#{delimiter}#{marker}"
 
     context
     |> build(method: :get, path: query)
@@ -157,8 +165,8 @@ defmodule AzureStorage.Blob do
   ```
   {:ok, context} = AzureStorage.create_blob_service("account_name", "account_key")
   context |> put_blob("blobs",
-    "cache-key-1.json", 
-    "{\\"data\\": []}", 
+    "cache-key-1.json",
+    "{\\"data\\": []}",
     content_type: "application/json;charset=\\"utf-8\\""
   )
   ```
@@ -182,6 +190,25 @@ defmodule AzureStorage.Blob do
     context
     |> build(method: :put, path: query, body: content, headers: headers)
     |> request()
+    |> parse_body_response()
+  end
+
+  def put_binary_blob(
+    %Context{service: "blob"} = context,
+    container,
+    filename,
+    bytes,
+    options \\ []
+  ) do
+    {:ok, opts} = NimbleOptions.validate(options, Schema.put_blob_options())
+    query = "#{container}/#{filename}"
+    headers = %{
+      "x-ms-blob-type" => "BlockBlob",
+      :"Content-Type" => "application/octet-stream"
+    }
+    context
+    |> build(method: :put, path: query, body: bytes, headers: headers)
+    |> request(recv_timeout: opts[:recv_timeout], timeout: opts[:timeout])
     |> parse_body_response()
   end
 
@@ -309,7 +336,7 @@ defmodule AzureStorage.Blob do
 
     path =
       case String.starts_with?(opts[:path], "/") do
-        true -> String.slice(opts[:path], 1..-1)
+        true -> String.slice(opts[:path], 1..-1//1)
         false -> opts[:path]
       end
 
