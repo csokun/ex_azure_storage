@@ -142,16 +142,20 @@ defmodule AzureStorage.Request.Context do
     # query_entities - keep table name only
     token = path |> String.split("?")
 
-    resource =
-      case length(token) > 1 do
-        true ->
-          "/#{account_name}/#{Enum.at(token, 0)}"
-
-        false ->
-          "/#{account_name}/#{path}"
+    table_path =
+      case token do
+        [base | _] -> base
+        _ -> path
       end
 
-    resource |> String.replace("'", "%27")
+    resource_prefix =
+      case Application.get_env(:ex_azure_storage, :azurite_emulator, false) do
+        true -> "/#{account_name}/#{account_name}"
+        _ -> "/#{account_name}"
+      end
+
+    "#{resource_prefix}/#{table_path}"
+    |> String.replace("'", "%27")
   end
 
   def get_generic_service_canonical_resource(account_name, path) do

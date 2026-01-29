@@ -234,7 +234,7 @@ defmodule AzureStorage.Table do
   end
 
   @doc """
-  The Insert Or Replace Entity operation replaces an existing entity or inserts a new entity if it does not exist in the table. 
+  The Insert Or Replace Entity operation replaces an existing entity or inserts a new entity if it does not exist in the table.
 
   Because this operation can insert or update an entity, it is also known as an upsert operation.
   """
@@ -301,6 +301,8 @@ defmodule AzureStorage.Table do
     |> parse_entity_change_response()
   end
 
+  defp parse_query_entities_response({:error, _} = response, _format), do: response
+
   defp parse_query_entities_response(
          {:ok, %{"odata.metadata" => _metadata, "value" => entities}, headers},
          :json
@@ -319,13 +321,10 @@ defmodule AzureStorage.Table do
 
   defp parse_entity_change_response({:ok, _, headers}) do
     headers
-    |> Enum.find(fn
-      {"ETag", _} -> true
-      _ -> false
-    end)
+    |> Enum.find(fn {key, _} -> String.downcase(to_string(key)) == "etag" end)
     |> case do
       nil -> {:ok, nil}
-      {"ETag", etag} -> {:ok, %{"ETag" => etag}}
+      {_, etag} -> {:ok, %{"ETag" => etag}}
     end
   end
 

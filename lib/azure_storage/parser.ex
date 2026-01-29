@@ -8,9 +8,11 @@ defmodule AzureStorage.Parser do
     content_type = get_content_type(headers)
 
     content =
-      case content_type do
-        "application/json" <> _ -> Jason.decode!(body)
-        "application/xml" -> XmlToMap.naive_map(body)
+      case {content_type, body} do
+        {"application/json" <> _, ""} -> ""
+        {"application/json" <> _, nil} -> ""
+        {"application/json" <> _, _} -> Jason.decode!(body)
+        {"application/xml", _} -> XmlToMap.naive_map(body)
         _ -> body
       end
 
@@ -59,15 +61,28 @@ defmodule AzureStorage.Parser do
   def parse_continuation_token(headers) do
     continuation_headers =
       headers
-      |> Enum.filter(fn
-        {"x-ms-continuation-" <> _, _} -> true
-        _ -> false
-      end)
-      |> Enum.map(fn {"x-ms-continuation-" <> prop, value} -> "#{prop}=#{value}" end)
+      |> Enum.reduce([], fn {name, value}, acc ->
+        header_name = name |> to_string()
+        header_key = String.downcase(header_name)
 
-    case length(continuation_headers) do
-      0 -> nil
-      _ -> continuation_headers |> Enum.join("&")
+        case header_key do
+          "x-ms-continuation-" <> _ ->
+            prop =
+              header_name
+              |> String.replace_prefix("x-ms-continuation-", "")
+              |> normalize_continuation_prop()
+
+            encoded_value = URI.encode_www_form(value)
+            acc ++ ["#{prop}=#{encoded_value}"]
+
+          _ ->
+            acc
+        end
+      end)
+
+    case continuation_headers do
+      [] -> nil
+      _ -> Enum.join(continuation_headers, "&")
     end
   end
 
@@ -101,6 +116,18 @@ defmodule AzureStorage.Parser do
       response ->
         response |> IO.inspect()
         {:error, ""}
+    end
+  end
+
+  defp normalize_continuation_prop(prop) do
+    prop
+    |> String.replace("_", "")
+    |> String.downcase()
+    |> case do
+      "nextpartitionkey" -> "NextPartitionKey"
+      "nextrowkey" -> "NextRowKey"
+      "nexttablename" -> "NextTableName"
+      other -> other
     end
   end
 
