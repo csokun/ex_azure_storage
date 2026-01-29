@@ -14,6 +14,7 @@ jobs:
     services:
       azurite:
         image: mcr.microsoft.com/azure-storage/azurite:3.35.0
+        options: --silent
         ports:
           - 10000:10000
           - 10001:10001
@@ -40,11 +41,7 @@ jobs:
         run: mix deps.get
 
       - name: Wait for Azurite to be ready
-        run: |
-          # until curl -f http://localhost:10000/devstoreaccount1; do
-          #   echo "Waiting for Azurite..."
-          sleep 10s
-          # done
+        run: sleep 5s
 
       - name: Run tests
         run: mix test --trace
