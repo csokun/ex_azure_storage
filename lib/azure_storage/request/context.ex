@@ -24,7 +24,7 @@ defmodule AzureStorage.Request.Context do
 
   def create(%Account{} = account, service, app_version \\ "2019-07-07")
       when is_binary(service) do
-    base_url = "https://#{account.name}.#{service}.core.windows.net"
+    base_url = get_default_url(service, account.name)
 
     headers =
       default_service_headers(service)
@@ -58,24 +58,26 @@ defmodule AzureStorage.Request.Context do
     headers_cfg = options[:headers]
 
     # TODO: improve headers
-    content_length = case headers_cfg[:"Content-Type"] do
-      "application/octet-stream" ->
-        case Kernel.byte_size(body) do
-          0 ->
-            %{}
+    content_length =
+      case headers_cfg[:"Content-Type"] do
+        "application/octet-stream" ->
+          case Kernel.byte_size(body) do
+            0 ->
+              %{}
 
-          value ->
-            %{:"content-length" => "#{value}"}
-        end
-      _ ->
-        case String.length(body) do
-          0 ->
-            %{}
+            value ->
+              %{:"content-length" => "#{value}"}
+          end
 
-          value ->
-            %{:"content-length" => "#{value}"}
-        end
-    end
+        _ ->
+          case String.length(body) do
+            0 ->
+              %{}
+
+            value ->
+              %{:"content-length" => "#{value}"}
+          end
+      end
 
     headers =
       default_headers
@@ -152,32 +154,56 @@ defmodule AzureStorage.Request.Context do
     resource |> String.replace("'", "%27")
   end
 
-  defp get_generic_service_canonical_resource(account_name, path) do
-    query_tokenize = path |> String.split("?")
-
-    [container, query_string] =
-      case length(query_tokenize) > 1 do
-        true -> query_tokenize
-        false -> ["", Enum.at(query_tokenize, 0)]
+  def get_generic_service_canonical_resource(account_name, path) do
+    {resource_path, query_string} =
+      case String.split(path, "?", parts: 2) do
+        [resource, query] -> {resource, query}
+        [resource] -> {resource, ""}
       end
 
-    canonical =
+    canonical_query =
       query_string
-      |> String.split("&")
+      |> String.split("&", trim: true)
+      |> Enum.reject(&(&1 == ""))
       |> Enum.sort(:asc)
-      |> Enum.map(fn line -> String.replace(line, "=", ":", global: false) end)
+      |> Enum.map(&String.replace(&1, "=", ":", global: false))
       |> Enum.join("\n")
 
-    # IO.puts("#{canonical} - #{query_string}")
+    resource_prefix =
+      case Application.get_env(:ex_azure_storage, :azurite_emulator, false) do
+        true -> "/#{account_name}/#{account_name}"
+        _ -> "/#{account_name}"
+      end
 
-    case canonical == query_string do
-      true -> "/#{account_name}/#{canonical}"
-      false -> "/#{account_name}/#{container}\n#{canonical}"
+    canonical_resource =
+      case resource_path do
+        "" -> resource_prefix
+        _ -> "#{resource_prefix}/#{resource_path}"
+      end
+
+    case canonical_query do
+      "" -> canonical_resource
+      _ -> "#{canonical_resource}\n#{canonical_query}"
     end
   end
 
   defp get_date() do
     DateTime.utc_now()
     |> Calendar.strftime("%a, %d %b %Y %H:%M:%S GMT")
+  end
+
+  defp get_default_url(service, account_name) do
+    case Application.get_env(:ex_azure_storage, :azurite_emulator, false) do
+      true ->
+        case service do
+          "blob" -> "http://127.0.0.1:10000/#{account_name}"
+          "queue" -> "http://127.0.0.1:10001/#{account_name}"
+          "table" -> "http://127.0.0.1:10002/#{account_name}"
+          _ -> raise "Azurite unsupported service: #{service}"
+        end
+
+      _ ->
+        "https://#{account_name}.#{service}.core.windows.net"
+    end
   end
 end
