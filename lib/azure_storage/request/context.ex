@@ -95,21 +95,12 @@ defmodule AzureStorage.Request.Context do
 
   def get_canonical_headers(%__MODULE__{headers: headers}) do
     headers
-    |> Map.to_list()
-    |> Enum.map(fn {k, v} ->
-      case is_atom(k) do
-        true -> {Atom.to_string(k), v}
-        _ -> {k, v}
-      end
+    |> Enum.flat_map(fn
+      {k, v} when is_atom(k) -> [{Atom.to_string(k), v}]
+      {k, v} -> [{k, v}]
     end)
-    |> Enum.filter(fn {k, _} ->
-      case k do
-        "x-ms-" <> _ -> true
-        _ -> false
-      end
-    end)
+    |> Enum.filter(fn {k, _v} -> String.starts_with?(k, "x-ms-") end)
     |> Enum.sort(:asc)
-    # TODO: safeguard - remove \r\n from header value
     |> Enum.map(fn {k, v} -> "#{k}:#{v}" end)
     |> Enum.join("\n")
   end
@@ -148,11 +139,7 @@ defmodule AzureStorage.Request.Context do
         _ -> path
       end
 
-    resource_prefix =
-      case Application.get_env(:ex_azure_storage, :azurite_emulator, false) do
-        true -> "/#{account_name}/#{account_name}"
-        _ -> "/#{account_name}"
-      end
+    resource_prefix = get_resource_prefix(account_name)
 
     "#{resource_prefix}/#{table_path}"
     |> String.replace("'", "%27")
@@ -168,7 +155,6 @@ defmodule AzureStorage.Request.Context do
     canonical_query =
       query_string
       |> String.split("&", trim: true)
-      |> Enum.reject(&(&1 == ""))
       |> Enum.map(fn pair ->
         case String.split(pair, "=", parts: 2) do
           [key, value] -> {String.downcase(key), URI.decode_www_form(value)}
@@ -180,7 +166,6 @@ defmodule AzureStorage.Request.Context do
       |> Enum.map(fn {key, values} ->
         joined_values =
           values
-          |> Enum.map(& &1)
           |> Enum.sort()
           |> Enum.join(",")
 
@@ -188,11 +173,7 @@ defmodule AzureStorage.Request.Context do
       end)
       |> Enum.join("\n")
 
-    resource_prefix =
-      case Application.get_env(:ex_azure_storage, :azurite_emulator, false) do
-        true -> "/#{account_name}/#{account_name}"
-        _ -> "/#{account_name}"
-      end
+    resource_prefix = get_resource_prefix(account_name)
 
     canonical_resource =
       case resource_path do
@@ -203,6 +184,13 @@ defmodule AzureStorage.Request.Context do
     case canonical_query do
       "" -> canonical_resource
       _ -> "#{canonical_resource}\n#{canonical_query}"
+    end
+  end
+
+  defp get_resource_prefix(account_name) do
+    case Application.get_env(:ex_azure_storage, :azurite_emulator, false) do
+      true -> "/#{account_name}/#{account_name}"
+      _ -> "/#{account_name}"
     end
   end
 

@@ -9,11 +9,17 @@ defmodule AzureStorage.Parser do
 
     content =
       case {content_type, body} do
-        {"application/json" <> _, ""} -> ""
-        {"application/json" <> _, nil} -> ""
-        {"application/json" <> _, _} -> Jason.decode!(body)
-        {"application/xml", _} -> XmlToMap.naive_map(body)
-        _ -> body
+        {"application/json" <> _, _} ->
+          case Jason.decode(body) do
+            {:ok, json} -> json
+            {:error, _} -> body
+          end
+
+        {"application/xml", _} ->
+          XmlToMap.naive_map(body)
+
+        _ ->
+          body
       end
 
     case status_code in [200, 201, 202, 204] do
@@ -61,19 +67,10 @@ defmodule AzureStorage.Parser do
   def parse_continuation_token(headers) do
     continuation_headers =
       headers
-      |> Enum.reduce([], fn {name, value}, acc ->
-        header_name = name |> to_string()
-        header_key = String.downcase(header_name)
-
-        case header_key do
-          "x-ms-continuation-" <> _ ->
-            prop =
-              header_name
-              |> String.replace_prefix("x-ms-continuation-", "")
-              |> normalize_continuation_prop()
-
-            encoded_value = URI.encode_www_form(value)
-            acc ++ ["#{prop}=#{encoded_value}"]
+      |> Enum.reduce([], fn {header_name, value}, acc ->
+        case header_name do
+          "x-ms-continuation-" <> prop ->
+            acc ++ ["#{normalize_continuation_prop(prop)}=#{value}"]
 
           _ ->
             acc
@@ -88,7 +85,7 @@ defmodule AzureStorage.Parser do
 
   # --- helpers
   defp get_content_type(headers) do
-    case Enum.find(headers, fn {k, _} -> String.downcase(to_string(k)) == "content-type" end) do
+    case Enum.find(headers, fn {k, _} -> String.downcase(k) == "content-type" end) do
       {_, content_type} -> content_type
       _ -> ""
     end
@@ -120,10 +117,7 @@ defmodule AzureStorage.Parser do
   end
 
   defp normalize_continuation_prop(prop) do
-    prop
-    |> String.replace("_", "")
-    |> String.downcase()
-    |> case do
+    case prop do
       "nextpartitionkey" -> "NextPartitionKey"
       "nextrowkey" -> "NextRowKey"
       "nexttablename" -> "NextTableName"
