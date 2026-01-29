@@ -8,6 +8,7 @@ defmodule TestExAzureStorage do
 
   setup_all do
     {:ok, context} = AzureStorage.create_blob_service(@account_name, @account_key)
+    ensure_container(context)
     %{context: context}
   end
 
@@ -29,6 +30,14 @@ defmodule TestExAzureStorage do
   test "can put with timeout", %{context: context} do
     file_path = "fixtures/2WE4HZPD57KVPL4RQKCB4PUG42SQ2RMJ.pdf"
     put_binary_blob(file_path, context, timeout: 60000, recv_timeout: 60000)
+  end
+
+  defp ensure_container(context) do
+    case Blob.create_container(context, @container) do
+      {:ok, _} -> :ok
+      {:error, "ContainerAlreadyExists"} -> :ok
+      {:error, reason} -> flunk("failed to create container: #{reason}")
+    end
   end
 
   defp put_binary_blob(file_path, context, options \\ []) do
