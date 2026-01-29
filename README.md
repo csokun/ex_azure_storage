@@ -1,4 +1,6 @@
-# AzureStorage  [![Build Status](https://github.com/csokun/ex_azure_storage/workflows/CI/badge.svg?branch=master)](https://github.com/csokun/ex_azure_storage/actions?query=workflow%3ACI)
+# AzureStorage  
+
+[![CI](https://github.com/csokun/ex_azure_storage/actions/workflows/main.yml/badge.svg)](https://github.com/csokun/ex_azure_storage/actions/workflows/main.yml)
 
 Elixir Azure Storage Rest API Client. Support Azure Blob, Queue, Fileshare and Table Storage.
 
@@ -10,7 +12,7 @@ by adding `ex_azure_storage` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ex_azure_storage, "~> 0.1.7"}
+    {:ex_azure_storage, "~> 0.1.8"}
   ]
 end
 ```
