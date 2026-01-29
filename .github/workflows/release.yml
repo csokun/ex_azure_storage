@@ -54,7 +54,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     environment:
       name: hex
-      url: https://hex.pm/packages/ex_clamav
+      url: https://hex.pm/packages/ex_azure_storage
     env:
       HEX_API_KEY: ${{ secrets.HEXPM_API_KEY }}
       MIX_ENV: dev
