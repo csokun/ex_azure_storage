@@ -123,18 +123,14 @@ defmodule AzureStorage.Blob do
   """
   @spec create_container(Context.t(), String.t()) :: {:ok, String.t()} | {:error, String.t()}
   def create_container(%Context{service: "blob"} = context, container) do
-    # @dev
-    # version: 2019-02-02+ requires
-    # x-ms-default-encryption-scope
-    # x-ms-deny-encryption-scope-override: (true | false)
     query = "#{container}?restype=container"
 
-    headers = %{
-      "x-ms-blob-public-access" => "blob",
-      "x-ms-default-encryption-scope" => "$account-encryption-key",
-      "x-ms-deny-encryption-scope-override" => false,
-      :"Content-Type" => "application/octet-stream"
-    }
+    headers =
+      %{
+        "x-ms-blob-public-access" => "blob",
+        :"Content-Type" => "application/octet-stream"
+      }
+      |> maybe_add_encryption_headers()
 
     context
     |> build(method: :put, path: query, headers: headers)
@@ -194,18 +190,20 @@ defmodule AzureStorage.Blob do
   end
 
   def put_binary_blob(
-    %Context{service: "blob"} = context,
-    container,
-    filename,
-    bytes,
-    options \\ []
-  ) do
+        %Context{service: "blob"} = context,
+        container,
+        filename,
+        bytes,
+        options \\ []
+      ) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.put_blob_options())
     query = "#{container}/#{filename}"
+
     headers = %{
       "x-ms-blob-type" => "BlockBlob",
       :"Content-Type" => "application/octet-stream"
     }
+
     context
     |> build(method: :put, path: query, body: bytes, headers: headers)
     |> request(recv_timeout: opts[:recv_timeout], timeout: opts[:timeout])
@@ -377,6 +375,18 @@ defmodule AzureStorage.Blob do
   end
 
   # ------------ helpers
+  defp maybe_add_encryption_headers(headers) do
+    case Application.get_env(:ex_azure_storage, :azurite_emulator, false) do
+      true ->
+        headers
+
+      _ ->
+        headers
+        |> Map.put("x-ms-default-encryption-scope", "$account-encryption-key")
+        |> Map.put("x-ms-deny-encryption-scope-override", "false")
+    end
+  end
+
   defp parse_lease_response({:ok, _, headers}) do
     props =
       headers

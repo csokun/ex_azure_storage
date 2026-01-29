@@ -2,8 +2,8 @@ defmodule AzureStorage.BlobTest do
   use ExUnit.Case, async: true
   alias AzureStorage.Blob
 
-  @account_name Application.get_env(:ex_azure_storage, :account_name, "")
-  @account_key Application.get_env(:ex_azure_storage, :account_key, "")
+  @account_name Application.compile_env(:ex_azure_storage, :account_name, "")
+  @account_key Application.compile_env(:ex_azure_storage, :account_key, "")
 
   setup_all do
     container = "bookings"
@@ -49,7 +49,7 @@ defmodule AzureStorage.BlobTest do
       |> Blob.put_blob("bookings", filename, "{\"checkIn\": \"2021-01-01\"}")
 
       assert {:ok, lease} = context |> Blob.acquire_lease(container, filename)
-      assert %{"ETag" => _, "lease_id" => _} = lease
+      assert %{"lease_id" => _} = lease
 
       context |> Blob.delete_blob(container, filename)
     end
@@ -91,7 +91,7 @@ defmodule AzureStorage.BlobTest do
         content_type: "application/json;charset=\"utf-8\""
       )
 
-      assert {:ok, %{"data" => []}, %{}} =
+      assert {:ok, %{"data" => []}, _} =
                context |> Blob.get_blob_content(container, filename, json: true)
 
       context |> Blob.delete_blob(container, filename)

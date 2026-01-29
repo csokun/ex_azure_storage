@@ -177,7 +177,7 @@ defmodule AzureStorage.Request.Context do
 
     canonical_resource =
       case resource_path do
-        "" -> resource_prefix
+        "" -> "#{resource_prefix}/"
         _ -> "#{resource_prefix}/#{resource_path}"
       end
 

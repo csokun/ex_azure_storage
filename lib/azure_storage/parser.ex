@@ -73,7 +73,7 @@ defmodule AzureStorage.Parser do
 
   # --- helpers
   defp get_content_type(headers) do
-    case Enum.find(headers, fn {k, _} -> k == "Content-Type" end) do
+    case Enum.find(headers, fn {k, _} -> String.downcase(to_string(k)) == "content-type" end) do
       {_, content_type} -> content_type
       _ -> ""
     end
