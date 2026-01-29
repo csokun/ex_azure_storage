@@ -165,8 +165,23 @@ defmodule AzureStorage.Request.Context do
       query_string
       |> String.split("&", trim: true)
       |> Enum.reject(&(&1 == ""))
-      |> Enum.sort(:asc)
-      |> Enum.map(&String.replace(&1, "=", ":", global: false))
+      |> Enum.map(fn pair ->
+        case String.split(pair, "=", parts: 2) do
+          [key, value] -> {String.downcase(key), URI.decode_www_form(value)}
+          [key] -> {String.downcase(key), ""}
+        end
+      end)
+      |> Enum.group_by(fn {key, _value} -> key end, fn {_, value} -> value end)
+      |> Enum.sort_by(fn {key, _values} -> key end)
+      |> Enum.map(fn {key, values} ->
+        joined_values =
+          values
+          |> Enum.map(& &1)
+          |> Enum.sort()
+          |> Enum.join(",")
+
+        "#{key}:#{joined_values}"
+      end)
       |> Enum.join("\n")
 
     resource_prefix =

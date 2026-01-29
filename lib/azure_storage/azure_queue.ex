@@ -79,11 +79,8 @@ defmodule AzureStorage.Queue do
   """
   def create_message(%Context{service: "queue"} = context, queue_name, text, options \\ []) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.create_message_options())
-    visibility_timeout = opts[:visibility_timeout]
-    message_ttl = opts[:message_ttl]
-
-    query =
-      "#{queue_name}/messages?visibilitytimeout=#{visibility_timeout}&messagettl=#{message_ttl}"
+    filtered_opts = Enum.reject(opts, fn {_key, value} -> is_nil(value) end)
+    query = "#{queue_name}/messages?#{encode_query(filtered_opts)}"
 
     context
     |> build(method: :post, path: query, body: create_message_body_xml(text))
@@ -111,8 +108,7 @@ defmodule AzureStorage.Queue do
         options \\ []
       ) do
     {:ok, opts} = NimbleOptions.validate(options, Schema.update_message_options())
-
-    query = "#{queue_name}/messages/#{message_id}?popreceipt=#{pop_receipt}&#{encode_query(opts)}"
+    query = build_message_path(queue_name, message_id, pop_receipt, opts)
 
     context
     |> build(method: :put, path: query, body: create_message_body_xml(text))
@@ -129,7 +125,7 @@ defmodule AzureStorage.Queue do
         "MessageId" => message_id,
         "PopReceipt" => pop_receipt
       }) do
-    query = "#{queue_name}/messages/#{message_id}?popreceipt=#{pop_receipt}"
+    query = build_message_path(queue_name, message_id, pop_receipt)
 
     context
     |> build(method: :delete, path: query)
@@ -160,6 +156,8 @@ defmodule AzureStorage.Queue do
   # Helpers
   #
 
+  defp parse_queue_message_response({:error, _} = response), do: response
+
   defp parse_queue_message_response({:ok, %{"QueueMessagesList" => list}, _headers}) do
     case list == %{} do
       true ->
@@ -187,6 +185,16 @@ defmodule AzureStorage.Queue do
 
         {:ok, items}
     end
+  end
+
+  defp build_message_path(queue_name, message_id, pop_receipt, options \\ []) do
+    query_params =
+      options
+      |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+      |> Keyword.put(:popreceipt, pop_receipt)
+      |> encode_query()
+
+    "#{queue_name}/messages/#{message_id}?#{query_params}"
   end
 
   defp create_message_body_xml(message) do
