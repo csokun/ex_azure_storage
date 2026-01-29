@@ -2,8 +2,8 @@ defmodule AzureStorage.QueueTest do
   use ExUnit.Case, async: true
   alias AzureStorage.Queue
 
-  @account_name Application.get_env(:ex_azure_storage, :account_name, "")
-  @account_key Application.get_env(:ex_azure_storage, :account_key, "")
+  @account_name Application.compile_env(:ex_azure_storage, :account_name, "")
+  @account_key Application.compile_env(:ex_azure_storage, :account_key, "")
 
   setup_all do
     {:ok, context} = AzureStorage.create_queue_service(@account_name, @account_key)

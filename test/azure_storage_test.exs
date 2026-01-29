@@ -21,8 +21,8 @@ defmodule AzureStorageTest do
                account: %Account{name: @account_name, key: @account_key},
                service: "blob",
                headers: @generic_headers,
-               url: "https://sample.blob.core.windows.net",
-               base_url: "https://sample.blob.core.windows.net",
+               url: "http://127.0.0.1:10000/sample",
+               base_url: "http://127.0.0.1:10000/sample",
                path: ""
              } = context
     end
@@ -34,7 +34,7 @@ defmodule AzureStorageTest do
         path: path
       } = context |> Context.build(method: :get, path: "?comp=list")
 
-      assert "https://sample.blob.core.windows.net/?comp=list" = url
+      assert "http://127.0.0.1:10000/sample/?comp=list" = url
       assert "?comp=list" = path
       assert headers |> Map.has_key?(:"x-ms-date")
     end
@@ -57,8 +57,8 @@ defmodule AzureStorageTest do
                account: %Account{name: @account_name, key: @account_key},
                service: "table",
                headers: @table_service_default_headers,
-               url: "https://sample.table.core.windows.net",
-               base_url: "https://sample.table.core.windows.net",
+               url: "http://127.0.0.1:10002/sample",
+               base_url: "http://127.0.0.1:10002/sample",
                path: ""
              } = context
     end

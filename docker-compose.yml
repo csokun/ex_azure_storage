@@ -1,0 +1,20 @@
+# ref. https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite
+services:
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.35.0
+    container_name: azurite
+    restart: unless-stopped
+    command: >
+      azurite
+        --blobHost 0.0.0.0 --blobPort 10000
+        --queueHost 0.0.0.0 --queuePort 10001
+        --tableHost 0.0.0.0 --tablePort 10002
+        --location /data
+        --debug /data/debug.log
+        --silent
+    ports:
+      - "10000:10000"
+      - "10001:10001"
+      - "10002:10002"
+    volumes:
+      - ./.azurite:/data

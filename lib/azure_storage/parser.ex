@@ -8,10 +8,18 @@ defmodule AzureStorage.Parser do
     content_type = get_content_type(headers)
 
     content =
-      case content_type do
-        "application/json" <> _ -> Jason.decode!(body)
-        "application/xml" -> XmlToMap.naive_map(body)
-        _ -> body
+      case {content_type, body} do
+        {"application/json" <> _, _} ->
+          case Jason.decode(body) do
+            {:ok, json} -> json
+            {:error, _} -> body
+          end
+
+        {"application/xml", _} ->
+          XmlToMap.naive_map(body)
+
+        _ ->
+          body
       end
 
     case status_code in [200, 201, 202, 204] do
@@ -59,21 +67,25 @@ defmodule AzureStorage.Parser do
   def parse_continuation_token(headers) do
     continuation_headers =
       headers
-      |> Enum.filter(fn
-        {"x-ms-continuation-" <> _, _} -> true
-        _ -> false
-      end)
-      |> Enum.map(fn {"x-ms-continuation-" <> prop, value} -> "#{prop}=#{value}" end)
+      |> Enum.reduce([], fn {header_name, value}, acc ->
+        case header_name do
+          "x-ms-continuation-" <> prop ->
+            acc ++ ["#{normalize_continuation_prop(prop)}=#{value}"]
 
-    case length(continuation_headers) do
-      0 -> nil
-      _ -> continuation_headers |> Enum.join("&")
+          _ ->
+            acc
+        end
+      end)
+
+    case continuation_headers do
+      [] -> nil
+      _ -> Enum.join(continuation_headers, "&")
     end
   end
 
   # --- helpers
   defp get_content_type(headers) do
-    case Enum.find(headers, fn {k, _} -> k == "Content-Type" end) do
+    case Enum.find(headers, fn {k, _} -> String.downcase(k) == "content-type" end) do
       {_, content_type} -> content_type
       _ -> ""
     end
@@ -101,6 +113,15 @@ defmodule AzureStorage.Parser do
       response ->
         response |> IO.inspect()
         {:error, ""}
+    end
+  end
+
+  defp normalize_continuation_prop(prop) do
+    case prop do
+      "nextpartitionkey" -> "NextPartitionKey"
+      "nextrowkey" -> "NextRowKey"
+      "nexttablename" -> "NextTableName"
+      other -> other
     end
   end
 

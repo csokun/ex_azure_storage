@@ -24,7 +24,7 @@ defmodule AzureStorage.Request.Context do
 
   def create(%Account{} = account, service, app_version \\ "2019-07-07")
       when is_binary(service) do
-    base_url = "https://#{account.name}.#{service}.core.windows.net"
+    base_url = get_default_url(service, account.name)
 
     headers =
       default_service_headers(service)
@@ -58,24 +58,26 @@ defmodule AzureStorage.Request.Context do
     headers_cfg = options[:headers]
 
     # TODO: improve headers
-    content_length = case headers_cfg[:"Content-Type"] do
-      "application/octet-stream" ->
-        case Kernel.byte_size(body) do
-          0 ->
-            %{}
+    content_length =
+      case headers_cfg[:"Content-Type"] do
+        "application/octet-stream" ->
+          case Kernel.byte_size(body) do
+            0 ->
+              %{}
 
-          value ->
-            %{:"content-length" => "#{value}"}
-        end
-      _ ->
-        case String.length(body) do
-          0 ->
-            %{}
+            value ->
+              %{:"content-length" => "#{value}"}
+          end
 
-          value ->
-            %{:"content-length" => "#{value}"}
-        end
-    end
+        _ ->
+          case String.length(body) do
+            0 ->
+              %{}
+
+            value ->
+              %{:"content-length" => "#{value}"}
+          end
+      end
 
     headers =
       default_headers
@@ -93,21 +95,12 @@ defmodule AzureStorage.Request.Context do
 
   def get_canonical_headers(%__MODULE__{headers: headers}) do
     headers
-    |> Map.to_list()
-    |> Enum.map(fn {k, v} ->
-      case is_atom(k) do
-        true -> {Atom.to_string(k), v}
-        _ -> {k, v}
-      end
+    |> Enum.flat_map(fn
+      {k, v} when is_atom(k) -> [{Atom.to_string(k), v}]
+      {k, v} -> [{k, v}]
     end)
-    |> Enum.filter(fn {k, _} ->
-      case k do
-        "x-ms-" <> _ -> true
-        _ -> false
-      end
-    end)
+    |> Enum.filter(fn {k, _v} -> String.starts_with?(k, "x-ms-") end)
     |> Enum.sort(:asc)
-    # TODO: safeguard - remove \r\n from header value
     |> Enum.map(fn {k, v} -> "#{k}:#{v}" end)
     |> Enum.join("\n")
   end
@@ -140,44 +133,84 @@ defmodule AzureStorage.Request.Context do
     # query_entities - keep table name only
     token = path |> String.split("?")
 
-    resource =
-      case length(token) > 1 do
-        true ->
-          "/#{account_name}/#{Enum.at(token, 0)}"
-
-        false ->
-          "/#{account_name}/#{path}"
+    table_path =
+      case token do
+        [base | _] -> base
+        _ -> path
       end
 
-    resource |> String.replace("'", "%27")
+    resource_prefix = get_resource_prefix(account_name)
+
+    "#{resource_prefix}/#{table_path}"
+    |> String.replace("'", "%27")
   end
 
-  defp get_generic_service_canonical_resource(account_name, path) do
-    query_tokenize = path |> String.split("?")
-
-    [container, query_string] =
-      case length(query_tokenize) > 1 do
-        true -> query_tokenize
-        false -> ["", Enum.at(query_tokenize, 0)]
+  def get_generic_service_canonical_resource(account_name, path) do
+    {resource_path, query_string} =
+      case String.split(path, "?", parts: 2) do
+        [resource, query] -> {resource, query}
+        [resource] -> {resource, ""}
       end
 
-    canonical =
+    canonical_query =
       query_string
-      |> String.split("&")
-      |> Enum.sort(:asc)
-      |> Enum.map(fn line -> String.replace(line, "=", ":", global: false) end)
+      |> String.split("&", trim: true)
+      |> Enum.map(fn pair ->
+        case String.split(pair, "=", parts: 2) do
+          [key, value] -> {String.downcase(key), URI.decode_www_form(value)}
+          [key] -> {String.downcase(key), ""}
+        end
+      end)
+      |> Enum.group_by(fn {key, _value} -> key end, fn {_, value} -> value end)
+      |> Enum.sort_by(fn {key, _values} -> key end)
+      |> Enum.map(fn {key, values} ->
+        joined_values =
+          values
+          |> Enum.sort()
+          |> Enum.join(",")
+
+        "#{key}:#{joined_values}"
+      end)
       |> Enum.join("\n")
 
-    # IO.puts("#{canonical} - #{query_string}")
+    resource_prefix = get_resource_prefix(account_name)
 
-    case canonical == query_string do
-      true -> "/#{account_name}/#{canonical}"
-      false -> "/#{account_name}/#{container}\n#{canonical}"
+    canonical_resource =
+      case resource_path do
+        "" -> "#{resource_prefix}/"
+        _ -> "#{resource_prefix}/#{resource_path}"
+      end
+
+    case canonical_query do
+      "" -> canonical_resource
+      _ -> "#{canonical_resource}\n#{canonical_query}"
+    end
+  end
+
+  defp get_resource_prefix(account_name) do
+    case Application.get_env(:ex_azure_storage, :azurite_emulator, false) do
+      true -> "/#{account_name}/#{account_name}"
+      _ -> "/#{account_name}"
     end
   end
 
   defp get_date() do
     DateTime.utc_now()
     |> Calendar.strftime("%a, %d %b %Y %H:%M:%S GMT")
+  end
+
+  defp get_default_url(service, account_name) do
+    case Application.get_env(:ex_azure_storage, :azurite_emulator, false) do
+      true ->
+        case service do
+          "blob" -> "http://127.0.0.1:10000/#{account_name}"
+          "queue" -> "http://127.0.0.1:10001/#{account_name}"
+          "table" -> "http://127.0.0.1:10002/#{account_name}"
+          _ -> raise "Azurite unsupported service: #{service}"
+        end
+
+      _ ->
+        "https://#{account_name}.#{service}.core.windows.net"
+    end
   end
 end
